@@ -119,10 +119,6 @@
 
 <script>
 const noBtn = document.getElementById("noBtn");
-const desktop = document.querySelector(".desktop");
-const windowEl = document.querySelector(".window");
-
-// Store original position
 const originalParent = noBtn.parentElement;
 const originalNextSibling = noBtn.nextSibling;
 
@@ -130,61 +126,39 @@ const originalNextSibling = noBtn.nextSibling;
 let dodgeCount = 0;
 const maxDodges = Math.floor(Math.random() * 5) + 5; // 5–9
 
-noBtn.style.position = "absolute";
-noBtn.style.zIndex = "10";
-
 function moveNoButton() {
     dodgeCount++;
 
-    // If limit reached → surrender
     if (dodgeCount >= maxDodges) {
         surrender();
         return;
     }
 
     const btnRect = noBtn.getBoundingClientRect();
-    const desktopRect = desktop.getBoundingClientRect();
-    const windowRect = windowEl.getBoundingClientRect();
-
-    const padding = 10;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
+    const padding = 10;
 
-    const minX = padding;
-    const maxX = vw - btnRect.width - padding;
+    // Calculate random position without overlapping window content
+    let x = Math.random() * (vw - btnRect.width - padding);
+    let y = Math.random() * (vh - btnRect.height - padding);
 
-    const minY = desktopRect.bottom + padding;
-    const maxY = vh - btnRect.height - padding;
-
-    let x, y;
-    let attempts = 0;
-
-    do {
-        x = Math.random() * (maxX - minX) + minX;
-        y = Math.random() * (maxY - minY) + minY;
-        attempts++;
-        if (attempts > 100) break;
-    } while (
-        x < windowRect.right &&
-        x + btnRect.width > windowRect.left &&
-        y < windowRect.bottom &&
-        y + btnRect.height > windowRect.top
-    );
-
-    noBtn.style.left = `${x}px`;
-    noBtn.style.top = `${y}px`;
+    noBtn.style.position = "absolute";
+    noBtn.style.left = x + "px";
+    noBtn.style.top = y + "px";
+    noBtn.style.zIndex = "10";
 }
 
 function surrender() {
-    // Reset styles
+    // Reset to original flex layout
     noBtn.style.position = "";
     noBtn.style.left = "";
     noBtn.style.top = "";
+    noBtn.style.zIndex = "";
 
-    // Put it back exactly where it was
     originalParent.insertBefore(noBtn, originalNextSibling);
 
-    // Change behavior
+    // Change behavior to "Yes"
     noBtn.textContent = "Yes";
     noBtn.onclick = () => {
         window.location.href = "loveme.html";
@@ -202,20 +176,15 @@ noBtn.addEventListener("touchstart", (e) => {
     e.preventDefault();
     moveNoButton();
 });
-
-// Keep bounds correct on resize / rotation
-window.addEventListener("resize", () => {
-    if (dodgeCount < maxDodges) {
-        moveNoButton();
-    }
-});
 </script>
+
 
 
 
 
 </body>
 </html>
+
 
 
 
