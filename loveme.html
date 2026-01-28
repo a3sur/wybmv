@@ -2,18 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>wybmv?</title>
+<title>February Valentine Calendar</title>
 <style>
     body {
         margin: 0;
-        background: white;
-        color: black;
-        font-family: monospace;
+        background: #f0f0f0;
+        font-family: "Monaco", monospace;
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
         min-height: 100vh;
+        padding: 20px;
     }
 
     .ascii {
@@ -21,27 +21,52 @@
         text-align: center;
         margin-bottom: 30px;
         font-size: 14px;
+        background: white;
+        padding: 15px;
+        border: 2px solid #000;
+        border-radius: 5px;
     }
 
-    .days {
-        text-align: left;
-        max-width: 400px;
+    .calendar {
+        display: grid;
+        grid-template-columns: repeat(7, 80px);
+        grid-auto-rows: 80px;
+        gap: 4px;
     }
 
     .day {
+        background: white;
+        border: 2px solid #000;
+        border-radius: 5px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
         cursor: pointer;
-        margin: 6px 0;
+        font-size: 14px;
+        padding: 5px;
+        box-sizing: border-box;
+        transition: background 0.2s, color 0.2s;
+    }
+
+    .day:hover {
+        background: #ffebcd;
     }
 
     .locked {
-        color: #aaa;
+        background: #ddd;
+        color: #888;
         cursor: not-allowed;
     }
 
-    .message {
-        margin-top: 20px;
+    .day-number {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .day-title {
+        font-size: 10px;
         text-align: center;
-        min-height: 40px;
     }
 </style>
 </head>
@@ -63,11 +88,15 @@ jgs=====""===""========""===""=======
     will you be my valentine?
 </div>
 
-<div class="days" id="days"></div>
-<div class="message" id="message"></div>
+<div class="calendar" id="calendar"></div>
 
 <script>
-const messages = {
+const today = new Date();
+const year = today.getFullYear();
+const calendar = document.getElementById("calendar");
+
+// Titles/messages for each day
+const titles = {
     1: "> she loves me (1)",
     2: "> she loves me not (2)",
     3: "> she loves me (3)",
@@ -81,38 +110,38 @@ const messages = {
     11: "> she loves me (11)",
     12: "> she loves me not (12)",
     13: "> she loves me (13)",
-    14: "will you be my valentine?"
+    14: "Will you be my valentine?"
 };
 
-const today = new Date();
-const year = today.getFullYear();
-const feb14 = new Date(year, 1, 14);
-const start = new Date(year, 1, 1);
-
-const daysContainer = document.getElementById("days");
-const messageBox = document.getElementById("message");
-
-Object.keys(messages).forEach(day => {
-    const date = new Date(year, 1, day);
+// Fill calendar grid (Feb 1-14)
+for (let day = 1; day <= 14; day++) {
+    const date = new Date(year, 1, day); // February = month 1
     const div = document.createElement("div");
     div.className = "day";
 
+    // Day number at top
+    const dayNumber = document.createElement("div");
+    dayNumber.className = "day-number";
+    dayNumber.textContent = day;
+    div.appendChild(dayNumber);
+
+    // Title/message inside the cell
+    const dayTitle = document.createElement("div");
+    dayTitle.className = "day-title";
+    dayTitle.textContent = titles[day];
+    div.appendChild(dayTitle);
+
     if (date > today) {
         div.classList.add("locked");
-        div.textContent = `Feb ${day}  [=]`;
     } else {
-        div.textContent = `Feb ${day}`;
         div.onclick = () => {
-            messageBox.textContent = messages[day];
+            window.location.href = `feb${day}.html`;
         };
     }
 
-    daysContainer.appendChild(div);
-});
+    calendar.appendChild(div);
+}
 </script>
 
 </body>
 </html>
-
-
-
