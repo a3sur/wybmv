@@ -122,19 +122,19 @@ const noBtn = document.getElementById("noBtn");
 const desktop = document.querySelector(".desktop");
 const windowEl = document.querySelector(".window");
 
+noBtn.style.position = "absolute";
+noBtn.style.zIndex = "10";
+
 noBtn.addEventListener("mouseenter", () => {
     const btnRect = noBtn.getBoundingClientRect();
     const desktopRect = desktop.getBoundingClientRect();
     const windowRect = windowEl.getBoundingClientRect();
 
-    // Page bounds
     const padding = 10;
+
     const minX = padding;
     const maxX = window.innerWidth - btnRect.width - padding;
 
-    // Y bounds:
-    // below desktop text
-    // above and below the prompt window
     const minY = desktopRect.bottom + padding;
     const maxY = window.innerHeight - btnRect.height - padding;
 
@@ -146,24 +146,23 @@ noBtn.addEventListener("mouseenter", () => {
         y = Math.random() * (maxY - minY) + minY;
         attempts++;
 
-        // Stop infinite loops just in case
-        if (attempts > 50) break;
-
+        if (attempts > 100) break;
     } while (
-        x + btnRect.width > windowRect.left &&
         x < windowRect.right &&
-        y + btnRect.height > windowRect.top &&
-        y < windowRect.bottom
+        x + btnRect.width > windowRect.left &&
+        y < windowRect.bottom &&
+        y + btnRect.height > windowRect.top
     );
 
-    noBtn.style.position = "fixed";
     noBtn.style.left = `${x}px`;
     noBtn.style.top = `${y}px`;
 });
 </script>
 
 
+
 </body>
 </html>
+
 
 
