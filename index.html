@@ -120,7 +120,7 @@
 <script>
 const noBtn = document.getElementById("noBtn");
 const originalParent = noBtn.parentElement;
-const originalNextSibling = noBtn.nextSibling;
+const originalNextSibling = noBtn.nextSibling; // might be null
 
 // Click / dodge counter
 let dodgeCount = 0;
@@ -139,9 +139,9 @@ function moveNoButton() {
     const vh = window.innerHeight;
     const padding = 10;
 
-    // Calculate random position without overlapping window content
-    let x = Math.random() * (vw - btnRect.width - padding);
-    let y = Math.random() * (vh - btnRect.height - padding);
+    // Random position
+    const x = Math.random() * (vw - btnRect.width - padding);
+    const y = Math.random() * (vh - btnRect.height - padding);
 
     noBtn.style.position = "absolute";
     noBtn.style.left = x + "px";
@@ -150,15 +150,20 @@ function moveNoButton() {
 }
 
 function surrender() {
-    // Reset to original flex layout
+    // Reset to original layout
     noBtn.style.position = "";
     noBtn.style.left = "";
     noBtn.style.top = "";
     noBtn.style.zIndex = "";
 
-    originalParent.insertBefore(noBtn, originalNextSibling);
+    // Return to original place
+    if (originalNextSibling) {
+        originalParent.insertBefore(noBtn, originalNextSibling);
+    } else {
+        originalParent.appendChild(noBtn);
+    }
 
-    // Change behavior to "Yes"
+    // Change to Yes button
     noBtn.textContent = "Yes";
     noBtn.onclick = () => {
         window.location.href = "loveme.html";
@@ -168,7 +173,7 @@ function surrender() {
     noBtn.replaceWith(noBtn.cloneNode(true));
 }
 
-// Desktop hover
+// Hover to dodge
 noBtn.addEventListener("mouseenter", moveNoButton);
 
 // Mobile tap
@@ -182,8 +187,10 @@ noBtn.addEventListener("touchstart", (e) => {
 
 
 
+
 </body>
 </html>
+
 
 
 
