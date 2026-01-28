@@ -139,15 +139,15 @@ function moveNoButton() {
 
     const padding = 5;
 
-    // Calculate max coordinates so button stays fully inside window
+    // calculate max coordinates so button stays fully inside window
     const maxX = windowRect.width - btnRect.width - padding;
     const maxY = windowRect.height - btnRect.height - padding;
 
-    // Random position inside window
+    // random position inside window
     const x = Math.random() * maxX;
     const y = Math.random() * maxY;
 
-    // Move button relative to .window
+    // move button relative to .window
     noBtn.style.position = "absolute";
     noBtn.style.left = x + "px";
     noBtn.style.top = y + "px";
@@ -155,7 +155,7 @@ function moveNoButton() {
 }
 
 function surrender() {
-    // Reset to original layout
+    // reset to original layout
     noBtn.style.position = "";
     noBtn.style.left = "";
     noBtn.style.top = "";
@@ -167,20 +167,20 @@ function surrender() {
         originalParent.appendChild(noBtn);
     }
 
-    // Change to Yes button
-    noBtn.textContent = "Yes";
+    // change button text
+    noBtn.textContent = "(◞╭╮◟)";
     noBtn.onclick = () => {
         window.location.href = "loveme.html";
     };
 
-    // Remove dodge behavior
+    // remove dodge behavior
     noBtn.replaceWith(noBtn.cloneNode(true));
 }
 
-// Hover to dodge
+// hover to dodge
 noBtn.addEventListener("mouseenter", moveNoButton);
 
-// Mobile tap
+// mobile tap
 noBtn.addEventListener("touchstart", (e) => {
     e.preventDefault();
     moveNoButton();
@@ -191,6 +191,7 @@ noBtn.addEventListener("touchstart", (e) => {
 
 </body>
 </html>
+
 
 
 
