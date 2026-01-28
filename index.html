@@ -134,22 +134,20 @@ function moveNoButton() {
         return;
     }
 
-    // Get window area bounds
-    const windowRect = windowEl.getBoundingClientRect();
     const btnRect = noBtn.getBoundingClientRect();
+    const windowRect = windowEl.getBoundingClientRect();
+
     const padding = 5;
 
-    // Constrain button inside the window
-    const minX = padding;
+    // Calculate max coordinates so button stays fully inside window
     const maxX = windowRect.width - btnRect.width - padding;
-    const minY = padding;
     const maxY = windowRect.height - btnRect.height - padding;
 
     // Random position inside window
-    const x = Math.random() * (maxX - minX) + minX;
-    const y = Math.random() * (maxY - minY) + minY;
+    const x = Math.random() * maxX;
+    const y = Math.random() * maxY;
 
-    // Move the button relative to window
+    // Move button relative to .window
     noBtn.style.position = "absolute";
     noBtn.style.left = x + "px";
     noBtn.style.top = y + "px";
@@ -191,11 +189,9 @@ noBtn.addEventListener("touchstart", (e) => {
 
 
 
-
-
-
 </body>
 </html>
+
 
 
 
