@@ -120,9 +120,9 @@
 <script>
 const noBtn = document.getElementById("noBtn");
 const originalParent = noBtn.parentElement;
-const originalNextSibling = noBtn.nextSibling; // might be null
+const originalNextSibling = noBtn.nextSibling; // may be null
+const windowEl = document.querySelector(".window"); // dodge inside this
 
-// Click / dodge counter
 let dodgeCount = 0;
 const maxDodges = Math.floor(Math.random() * 5) + 5; // 5–9
 
@@ -134,15 +134,22 @@ function moveNoButton() {
         return;
     }
 
+    // Get window area bounds
+    const windowRect = windowEl.getBoundingClientRect();
     const btnRect = noBtn.getBoundingClientRect();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const padding = 10;
+    const padding = 5;
 
-    // Random position
-    const x = Math.random() * (vw - btnRect.width - padding);
-    const y = Math.random() * (vh - btnRect.height - padding);
+    // Constrain button inside the window
+    const minX = padding;
+    const maxX = windowRect.width - btnRect.width - padding;
+    const minY = padding;
+    const maxY = windowRect.height - btnRect.height - padding;
 
+    // Random position inside window
+    const x = Math.random() * (maxX - minX) + minX;
+    const y = Math.random() * (maxY - minY) + minY;
+
+    // Move the button relative to window
     noBtn.style.position = "absolute";
     noBtn.style.left = x + "px";
     noBtn.style.top = y + "px";
@@ -156,7 +163,6 @@ function surrender() {
     noBtn.style.top = "";
     noBtn.style.zIndex = "";
 
-    // Return to original place
     if (originalNextSibling) {
         originalParent.insertBefore(noBtn, originalNextSibling);
     } else {
@@ -190,6 +196,7 @@ noBtn.addEventListener("touchstart", (e) => {
 
 </body>
 </html>
+
 
 
 
