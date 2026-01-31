@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Heart Snake</title>
+<style>
+    body {
+        margin: 0;
+        background: #cfcfcf;
+        font-family: "Monaco", monospace;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+    }
+
+    .window {
+        background: #fff;
+        border: 2px solid #000;
+        box-shadow: 4px 4px 0 #000;
+        padding: 10px;
+        width: 420px;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .titlebar {
+        background: #e0e0e0;
+        border-bottom: 2px solid #000;
+        padding: 6px;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    .hud {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        margin: 8px 0;
+    }
+
+    canvas {
+        background: #fff;
+        border: 2px solid #000;
+        display: block;
+        margin: 0 auto;
+    }
+
+    .popup-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    button {
+        font-family: inherit;
+        font-size: 12px;
+        padding: 4px 10px;
+        border: 1px solid #000;
+        background: #fff;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background: #e0e0e0;
+    }
+
+    .mail-list {
+        font-size: 12px;
+        border: 1px solid #000;
+        margin-top: 8px;
+    }
+
+    .mail-item {
+        padding: 6px;
+        border-bottom: 1px solid #000;
+    }
+</style>
+</head>
+<body>
+
+<!-- SNAKE WINDOW -->
+<div class="window" id="snakeWindow">
+    <div class="titlebar">Heart Snake</div>
+
+    <div class="hud">
+        <div>Goal: Collect 10 hearts</div>
+        <div id="counter">0 / 10 ❤️</div>
+    </div>
+
+    <canvas id="game" width="400" height="400"></canvas>
+</div>
+
+<!-- MAIL NOTIFICATION -->
+<div class="window hidden" id="mailPopup">
+    <div class="titlebar">Mail</div>
+    <div style="text-align:center; padding:10px;">
+        📬 You’ve got mail.<br><br>
+        Open it?
+        <div class="popup-buttons">
+            <button onclick="openInbox()">Yes</button>
+            <button onclick="goBack()">No</button>
+        </div>
+    </div>
+</div>
+
+<!-- EMAIL INBOX -->
+<div class="window hidden" id="inbox">
+    <div class="titlebar">Inbox</div>
+    <div class="mail-list">
+        <div class="mail-item">
+            💌 <strong>From:</strong> You<br>
+            <strong>Subject:</strong> Something I’ve been meaning to say
+        </div>
+        <div class="mail-item">
+            (email content goes here)
+        </div>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const gridSize = 20;
+const tileCount = canvas.width / gridSize;
+
+let snake = [{ x: 10, y: 10 }];
+let dx = 1;
+let dy = 0;
+
+let heart = randomHeart();
+let heartsCollected = 0;
+const goal = 10;
+
+const counter = document.getElementById("counter");
+
+const snakeWindow = document.getElementById("snakeWindow");
+const mailPopup = document.getElementById("mailPopup");
+const inbox = document.getElementById("inbox");
+
+function randomHeart() {
+    return {
+        x: Math.floor(Math.random() * tileCount),
+        y: Math.floor(Math.random() * tileCount)
+    };
+}
+
+function drawHeart(x, y) {
+    ctx.font = "16px monospace";
+    ctx.fillText("❤️", x * gridSize + 2, y * gridSize + 16);
+}
+
+function gameLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+
+    if (head.x < 0) head.x = tileCount - 1;
+    if (head.x >= tileCount) head.x = 0;
+    if (head.y < 0) head.y = tileCount - 1;
+    if (head.y >= tileCount) head.y = 0;
+
+    snake.unshift(head);
+
+    if (head.x === heart.x && head.y === heart.y) {
+        heartsCollected++;
+        counter.textContent = `${heartsCollected} / 10 ❤️`;
+        heart = randomHeart();
+
+        if (heartsCollected >= goal) {
+            clearInterval(game);
+            setTimeout(() => {
+                snakeWindow.classList.add("hidden");
+                mailPopup.classList.remove("hidden");
+            }, 3000);
+        }
+    } else {
+        snake.pop();
+    }
+
+    ctx.fillStyle = "#000";
+    snake.forEach(p =>
+        ctx.fillRect(p.x * gridSize, p.y * gridSize, gridSize, gridSize)
+    );
+
+    drawHeart(heart.x, heart.y);
+}
+
+document.addEventListener("keydown", e => {
+    if (e.key === "ArrowUp" && dy === 0) { dx = 0; dy = -1; }
+    if (e.key === "ArrowDown" && dy === 0) { dx = 0; dy = 1; }
+    if (e.key === "ArrowLeft" && dx === 0) { dx = -1; dy = 0; }
+    if (e.key === "ArrowRight" && dx === 0) { dx = 1; dy = 0; }
+});
+
+function openInbox() {
+    mailPopup.classList.add("hidden");
+    inbox.classList.remove("hidden");
+}
+
+function goBack() {
+    window.location.href = "loveme.html";
+}
+
+const game = setInterval(gameLoop, 120);
+</script>
+
+</body>
+</html>
