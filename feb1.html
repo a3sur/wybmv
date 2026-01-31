@@ -2,6 +2,211 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<title>Heart Snake</title>
+<style>
+    body {
+        margin: 0;
+        background: #cfcfcf;
+        font-family: "Monaco", monospace;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+    }
+
+    .window {
+        background: #fff;
+        border: 2px solid #000;
+        box-shadow: 4px 4px 0 #000;
+        padding: 10px;
+        width: 420px;
+    }
+
+    .titlebar {
+        background: #e0e0e0;
+        border-bottom: 2px solid #000;
+        padding: 6px;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    .hud {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        margin: 8px 0;
+    }
+
+    canvas {
+        background: #fff;
+        border: 2px solid #000;
+        display: block;
+        margin: 0 auto;
+    }
+
+    .win {
+        text-align: center;
+        margin-top: 10px;
+        font-size: 14px;
+        display: none;
+    }
+</style>
+</head>
+<body>
+
+<div class="window">
+    <div class="titlebar">Heart Snake</div>
+
+    <div class="hud">
+        <div>Goal: Collect 10 hearts</div>
+        <div id="counter">0 / 10 ❤️</div>
+    </div>
+
+    <canvas id="game" width="400" height="400"></canvas>
+
+    <div class="win" id="win">
+        ❤️ You collected all the hearts ❤️
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const gridSize = 20;
+const tileCount = canvas.width / gridSize;
+
+let snake = [{ x: 10, y: 10 }];
+let dx = 1;
+let dy = 0;
+
+let heart = randomHeart();
+let heartsCollected = 0;
+const goal = 10;
+
+const counter = document.getElementById("counter");
+const winMessage = document.getElementById("win");
+
+function randomHeart() {
+    return {
+        x: Math.floor(Math.random() * tileCount),
+        y: Math.floor(Math.random() * tileCount)
+    };
+}
+
+function drawHeart(x, y) {
+    ctx.font = "16px monospace";
+    ctx.fillText("❤️", x * gridSize + 2, y * gridSize + 16);
+}
+
+function gameLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const head = {
+        x: snake[0].x + dx,
+        y: snake[0].y + dy
+    };
+
+    // Wrap around edges (retro feel)
+    if (head.x < 0) head.x = tileCount - 1;
+    if (head.x >= tileCount) head.x = 0;
+    if (head.y < 0) head.y = tileCount - 1;
+    if (head.y >= tileCount) head.y = 0;
+
+    // Collision with self = reset
+    for (let part of snake) {
+        if (part.x === head.x && part.y === head.y) {
+            snake = [{ x: 10, y: 10 }];
+            dx = 1;
+            dy = 0;
+            heartsCollected = 0;
+            counter.textContent = `0 / 10 ❤️`;
+            heart = randomHeart();
+            return;
+        }
+    }
+
+    snake.unshift(head);
+
+    // Heart collected
+    if (head.x === heart.x && head.y === heart.y) {
+        heartsCollected++;
+        counter.textContent = `${heartsCollected} / 10 ❤️`;
+        heart = randomHeart();
+
+        if (heartsCollected >= goal) {
+            winMessage.style.display = "block";
+            clearInterval(game);
+        }
+    } else {
+        snake.pop();
+    }
+
+    // Draw snake
+    ctx.fillStyle = "#000";
+    snake.forEach(part => {
+        ctx.fillRect(
+            part.x * gridSize,
+            part.y * gridSize,
+            gridSize,
+            gridSize
+        );
+    });
+
+    // Draw heart
+    drawHeart(heart.x, heart.y);
+}
+
+document.addEventListener("keydown", e => {
+    if (e.key === "ArrowUp" && dy === 0) { dx = 0; dy = -1; }
+    if (e.key === "ArrowDown" && dy === 0) { dx = 0; dy = 1; }
+    if (e.key === "ArrowLeft" && dx === 0) { dx = -1; dy = 0; }
+    if (e.key === "ArrowRight" && dx === 0) { dx = 1; dy = 0; }
+});
+
+const game = setInterval(gameLoop, 120);
+</script>
+
+</body>
+</html>
+❤️ What you get
+Clear goal text: “Collect 10 hearts”
+
+Live counter: 3 / 10 ❤️
+
+Emoji hearts (cute + readable)
+
+Screen-wrapped movement (no frustrating deaths)
+
+Retro Mac window styling
+
+Instant win message when completed
+
+If you want next:
+
+mobile swipe controls
+
+hearts that spell a message at the end
+
+redirect to another page on win
+
+slower / faster difficulty modes
+
+Just tell me 💕🐍
+
+You said:
+also can you add a small button at the bottom of the page for feb1.html that takes you back to loveme.html
+ChatGPT said:
+Absolutely — easy, clean addition that won’t break the vibe 💾🖤
+Here’s feb1.html updated with a small retro button at the bottom that sends you back to loveme.html.
+
+I’ll show the full page so you can drop it in directly.
+
+feb1.html (with Back button)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
 <title>Feb 1</title>
 <style>
     body {
@@ -14,15 +219,15 @@
         height: 100vh;
     }
 
-    /* Window frame */
     .window {
         width: 500px;
         background: #ffffff;
         border: 2px solid #000;
         box-shadow: 4px 4px 0 #000;
+        display: flex;
+        flex-direction: column;
     }
 
-    /* Title bar */
     .titlebar {
         background: #e0e0e0;
         border-bottom: 2px solid #000;
@@ -33,7 +238,7 @@
         font-size: 14px;
     }
 
-    .titlebar .controls {
+    .controls {
         display: flex;
         gap: 4px;
     }
@@ -49,21 +254,35 @@
         margin-left: 8px;
     }
 
-    /* Text area */
     .content {
         padding: 14px;
         font-size: 13px;
         white-space: pre-wrap;
         line-height: 1.5;
+        flex-grow: 1;
     }
 
-    /* Footer hint */
     .footer {
         border-top: 1px solid #000;
         padding: 6px;
         font-size: 11px;
         background: #f4f4f4;
-        text-align: right;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .back-btn {
+        font-family: inherit;
+        font-size: 11px;
+        padding: 2px 8px;
+        border: 1px solid #000;
+        background: #fff;
+        cursor: pointer;
+    }
+
+    .back-btn:hover {
+        background: #e0e0e0;
     }
 </style>
 </head>
@@ -107,7 +326,10 @@ till the end of time
     </div>
 
     <div class="footer">
-        Feb 1 • saved
+        <button class="back-btn" onclick="window.location.href='loveme.html'">
+            ← back
+        </button>
+        <span>Feb 1 • saved</span>
     </div>
 </div>
 
