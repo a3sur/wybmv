@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Heart Snake</title>
+<title>Feb 2</title>
 <style>
     body {
         margin: 0;
@@ -15,7 +15,7 @@
     }
 
     .window {
-        position: relative; /* REQUIRED for shake */
+        position: relative; /* shake */
         background: #fff;
         border: 2px solid #000;
         box-shadow: 4px 4px 0 #000;
@@ -118,17 +118,17 @@
 <div class="window" id="snakeWindow">
     <div class="titlebar">Heart Snake</div>
     <div class="hud">
-        <div>Goal: Collect 10 hearts</div>
+        <div>Collect 10 hearts for a surprise!</div>
         <div id="counter">0 / 10 ❤️</div>
     </div>
     <canvas id="game" width="400" height="400"></canvas>
 </div>
 
-<!-- you got mail -->
+<!-- mail -->
 <div class="window hidden" id="mailPopup">
     <div class="titlebar">Mail</div>
     <div style="text-align:center; padding:12px;">
-        📬 You’ve got mail.<br><br>
+        You’ve got mail.<br><br>
         Open it?
         <div style="margin-top:10px;">
             <button onclick="openInbox()">Yes</button>
@@ -142,7 +142,7 @@
     <div class="titlebar">Inbox</div>
     <div class="mail-list">
         <div class="mail-item">
-            💌 <strong>From:</strong> your secret admirer<br>
+            <strong>From:</strong> your secret admirer<br>
             <strong>Subject:</strong> heartfelt message
         </div>
         <div class="mail-item">
@@ -297,5 +297,6 @@ const game = setInterval(gameLoop, 120);
 
 </body>
 </html>
+
 
 
