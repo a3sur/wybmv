@@ -48,13 +48,6 @@
         margin: 0 auto;
     }
 
-    .popup-buttons {
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-        margin-top: 10px;
-    }
-
     button {
         font-family: inherit;
         font-size: 12px;
@@ -68,6 +61,19 @@
         background: #e0e0e0;
     }
 
+    /* 💥 Explosion animation */
+    @keyframes explode {
+        0% { transform: scale(1) rotate(0); opacity: 1; }
+        20% { transform: scale(1.05) rotate(-2deg); }
+        40% { transform: scale(1.05) rotate(2deg); }
+        60% { transform: scale(0.95) rotate(-2deg); }
+        100% { transform: scale(1.4); opacity: 0; }
+    }
+
+    .explode {
+        animation: explode 0.6s ease-out forwards;
+    }
+
     .mail-list {
         font-size: 12px;
         border: 1px solid #000;
@@ -77,6 +83,11 @@
     .mail-item {
         padding: 6px;
         border-bottom: 1px solid #000;
+    }
+
+    .footer {
+        margin-top: 10px;
+        text-align: right;
     }
 </style>
 </head>
@@ -94,22 +105,23 @@
     <canvas id="game" width="400" height="400"></canvas>
 </div>
 
-<!-- MAIL NOTIFICATION -->
+<!-- MAIL POPUP -->
 <div class="window hidden" id="mailPopup">
     <div class="titlebar">Mail</div>
-    <div style="text-align:center; padding:10px;">
+    <div style="text-align:center; padding:12px;">
         📬 You’ve got mail.<br><br>
         Open it?
-        <div class="popup-buttons">
+        <div style="margin-top:10px;">
             <button onclick="openInbox()">Yes</button>
             <button onclick="goBack()">No</button>
         </div>
     </div>
 </div>
 
-<!-- EMAIL INBOX -->
+<!-- INBOX -->
 <div class="window hidden" id="inbox">
     <div class="titlebar">Inbox</div>
+
     <div class="mail-list">
         <div class="mail-item">
             💌 <strong>From:</strong> You<br>
@@ -118,6 +130,10 @@
         <div class="mail-item">
             (email content goes here)
         </div>
+    </div>
+
+    <div class="footer">
+        <button onclick="goBack()">← Back</button>
     </div>
 </div>
 
@@ -173,10 +189,17 @@ function gameLoop() {
 
         if (heartsCollected >= goal) {
             clearInterval(game);
+
+            // 💥 explode the window
+            setTimeout(() => {
+                snakeWindow.classList.add("explode");
+            }, 300);
+
+            // 📬 show mail popup shortly after
             setTimeout(() => {
                 snakeWindow.classList.add("hidden");
                 mailPopup.classList.remove("hidden");
-            }, 3000);
+            }, 1200);
         }
     } else {
         snake.pop();
