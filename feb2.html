@@ -15,6 +15,7 @@
     }
 
     .window {
+        position: relative; /* REQUIRED for shake */
         background: #fff;
         border: 2px solid #000;
         box-shadow: 4px 4px 0 #000;
@@ -61,17 +62,37 @@
         background: #e0e0e0;
     }
 
-    /* 💥 Explosion animation */
+    /* 💥 REAL explosion */
     @keyframes explode {
-        0% { transform: scale(1) rotate(0); opacity: 1; }
-        20% { transform: scale(1.05) rotate(-2deg); }
-        40% { transform: scale(1.05) rotate(2deg); }
-        60% { transform: scale(0.95) rotate(-2deg); }
-        100% { transform: scale(1.4); opacity: 0; }
+        0% {
+            transform: translate(0,0) scale(1);
+            opacity: 1;
+        }
+        15% {
+            transform: translate(-8px, 4px) rotate(-2deg);
+        }
+        30% {
+            transform: translate(8px, -4px) rotate(2deg);
+        }
+        45% {
+            transform: translate(-10px, -6px) rotate(-3deg);
+        }
+        60% {
+            transform: translate(10px, 6px) rotate(3deg);
+        }
+        80% {
+            transform: scale(1.6);
+            opacity: 0.6;
+        }
+        100% {
+            transform: scale(2);
+            opacity: 0;
+        }
     }
 
     .explode {
-        animation: explode 0.6s ease-out forwards;
+        animation: explode 0.8s ease-out forwards;
+        pointer-events: none;
     }
 
     .mail-list {
@@ -93,19 +114,17 @@
 </head>
 <body>
 
-<!-- SNAKE WINDOW -->
+<!-- 🐍 SNAKE WINDOW -->
 <div class="window" id="snakeWindow">
     <div class="titlebar">Heart Snake</div>
-
     <div class="hud">
         <div>Goal: Collect 10 hearts</div>
         <div id="counter">0 / 10 ❤️</div>
     </div>
-
     <canvas id="game" width="400" height="400"></canvas>
 </div>
 
-<!-- MAIL POPUP -->
+<!-- 📬 MAIL POPUP -->
 <div class="window hidden" id="mailPopup">
     <div class="titlebar">Mail</div>
     <div style="text-align:center; padding:12px;">
@@ -118,10 +137,9 @@
     </div>
 </div>
 
-<!-- INBOX -->
+<!-- 📩 INBOX -->
 <div class="window hidden" id="inbox">
     <div class="titlebar">Inbox</div>
-
     <div class="mail-list">
         <div class="mail-item">
             💌 <strong>From:</strong> You<br>
@@ -131,7 +149,6 @@
             (email content goes here)
         </div>
     </div>
-
     <div class="footer">
         <button onclick="goBack()">← Back</button>
     </div>
@@ -153,7 +170,6 @@ let heartsCollected = 0;
 const goal = 10;
 
 const counter = document.getElementById("counter");
-
 const snakeWindow = document.getElementById("snakeWindow");
 const mailPopup = document.getElementById("mailPopup");
 const inbox = document.getElementById("inbox");
@@ -190,16 +206,16 @@ function gameLoop() {
         if (heartsCollected >= goal) {
             clearInterval(game);
 
-            // 💥 explode the window
+            // 💥 explode shortly after win
             setTimeout(() => {
                 snakeWindow.classList.add("explode");
-            }, 300);
+            }, 200);
 
-            // 📬 show mail popup shortly after
+            // 📬 swap to mail popup
             setTimeout(() => {
                 snakeWindow.classList.add("hidden");
                 mailPopup.classList.remove("hidden");
-            }, 1200);
+            }, 1000);
         }
     } else {
         snake.pop();
