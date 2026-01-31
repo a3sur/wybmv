@@ -248,6 +248,54 @@ function goBack() {
 const game = setInterval(gameLoop, 120);
 </script>
 
+<script>
+/* === DEV ACCESS: type "dev26" to auto-complete snake === */
+/* Remove this entire block to disable */
+
+(() => {
+    const DEV_CODE = "dev26";
+    let buffer = "";
+    let used = false;
+
+    document.addEventListener("keydown", (e) => {
+        if (used) return;
+
+        buffer += e.key.toLowerCase();
+        buffer = buffer.slice(-DEV_CODE.length);
+
+        if (buffer === DEV_CODE) {
+            used = true;
+            devFinishSnake();
+        }
+    });
+
+    function devFinishSnake() {
+        // Safety checks
+        if (typeof heartsCollected === "undefined") return;
+        if (typeof goal === "undefined") return;
+
+        heartsCollected = goal;
+        counter.textContent = `${goal} / 10 ❤️`;
+
+        if (typeof game !== "undefined") {
+            clearInterval(game);
+        }
+
+        // Trigger same explosion + mail flow
+        setTimeout(() => {
+            snakeWindow.classList.add("explode");
+        }, 200);
+
+        setTimeout(() => {
+            snakeWindow.classList.add("hidden");
+            mailPopup.classList.remove("hidden");
+        }, 1000);
+    }
+})();
+</script>
+
+
 </body>
 </html>
+
 
