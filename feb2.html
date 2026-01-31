@@ -62,7 +62,7 @@
         background: #e0e0e0;
     }
 
-    /* 💥 REAL explosion */
+    /* page explosion */
     @keyframes explode {
         0% {
             transform: translate(0,0) scale(1);
@@ -114,7 +114,7 @@
 </head>
 <body>
 
-<!-- 🐍 SNAKE WINDOW -->
+<!-- snake window -->
 <div class="window" id="snakeWindow">
     <div class="titlebar">Heart Snake</div>
     <div class="hud">
@@ -124,7 +124,7 @@
     <canvas id="game" width="400" height="400"></canvas>
 </div>
 
-<!-- 📬 MAIL POPUP -->
+<!-- you got mail -->
 <div class="window hidden" id="mailPopup">
     <div class="titlebar">Mail</div>
     <div style="text-align:center; padding:12px;">
@@ -137,13 +137,13 @@
     </div>
 </div>
 
-<!-- 📩 INBOX -->
+<!-- inbox -->
 <div class="window hidden" id="inbox">
     <div class="titlebar">Inbox</div>
     <div class="mail-list">
         <div class="mail-item">
-            💌 <strong>From:</strong> You<br>
-            <strong>Subject:</strong> Something I’ve been meaning to say
+            💌 <strong>From:</strong> your secret admirer<br>
+            <strong>Subject:</strong> heartfelt message
         </div>
         <div class="mail-item">
             (email content goes here)
@@ -250,3 +250,4 @@ const game = setInterval(gameLoop, 120);
 
 </body>
 </html>
+
