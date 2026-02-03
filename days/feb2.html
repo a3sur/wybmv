@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Feb 2</title>
+<style>
+    body {
+        margin: 0;
+        background: #cfcfcf;
+        font-family: "Monaco", monospace;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+    }
+
+    .window {
+        position: relative; /* shake */
+        background: #fff;
+        border: 2px solid #000;
+        box-shadow: 4px 4px 0 #000;
+        padding: 10px;
+        width: 420px;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .titlebar {
+        background: #e0e0e0;
+        border-bottom: 2px solid #000;
+        padding: 6px;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    .hud {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        margin: 8px 0;
+    }
+
+    canvas {
+        background: #fff;
+        border: 2px solid #000;
+        display: block;
+        margin: 0 auto;
+    }
+
+    button {
+        font-family: inherit;
+        font-size: 12px;
+        padding: 4px 10px;
+        border: 1px solid #000;
+        background: #fff;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background: #e0e0e0;
+    }
+
+    /* page explosion */
+    @keyframes explode {
+        0% {
+            transform: translate(0,0) scale(1);
+            opacity: 1;
+        }
+        15% {
+            transform: translate(-8px, 4px) rotate(-2deg);
+        }
+        30% {
+            transform: translate(8px, -4px) rotate(2deg);
+        }
+        45% {
+            transform: translate(-10px, -6px) rotate(-3deg);
+        }
+        60% {
+            transform: translate(10px, 6px) rotate(3deg);
+        }
+        80% {
+            transform: scale(1.6);
+            opacity: 0.6;
+        }
+        100% {
+            transform: scale(2);
+            opacity: 0;
+        }
+    }
+
+    .explode {
+        animation: explode 0.8s ease-out forwards;
+        pointer-events: none;
+    }
+
+    .mail-list {
+        font-size: 12px;
+        border: 1px solid #000;
+        margin-top: 8px;
+    }
+
+    .mail-item {
+        padding: 6px;
+        border-bottom: 1px solid #000;
+    }
+
+    .footer {
+        margin-top: 10px;
+        text-align: right;
+    }
+</style>
+</head>
+<body>
+
+<!-- snake window -->
+<div class="window" id="snakeWindow">
+    <div class="titlebar">Heart Snake</div>
+    <div class="hud">
+        <div>Collect 10 hearts for a surprise!</div>
+        <div id="counter">0 / 10 ❤️</div>
+    </div>
+    <canvas id="game" width="400" height="400"></canvas>
+</div>
+
+<!-- mail -->
+<div class="window hidden" id="mailPopup">
+    <div class="titlebar">Mail</div>
+    <div style="text-align:center; padding:12px;">
+        You’ve got mail.<br><br>
+        Open it?
+        <div style="margin-top:10px;">
+            <button onclick="openInbox()">Yes</button>
+            <button onclick="goBack()">No</button>
+        </div>
+    </div>
+</div>
+
+<!-- inbox -->
+<div class="window hidden" id="inbox">
+    <div class="titlebar">Inbox</div>
+    <div class="mail-list">
+        <div class="mail-item">
+            <strong>From:</strong> andrew<br>
+            <strong>Subject:</strong> heartfelt message
+        </div>
+        <div class="mail-item">
+            	<p>Hi honey! I hope you enjoyed playing snake. I’ve made enough by now that it's second nature. I miss you really badly. You’re probably reading this while I’m either asleep or at work, and I hope you are having a great night/day. If not, I hope this makes it better.</p>
+			
+				<p>I love you so very much. I’ve been thinking of so many cool date ideas, that I can not wait to take you on once I have the money and time to. I really want to go to that place we always pass between my old house and yours, on 8th street. I think it's a taco place or something.</p>
+
+				<p>I’ve been really excited for valentines day. I feel really proud of myself and of us to be honest. I always feel proud of you. I’ve been feeling really productive, and aware of my moods way more than I was before. Using an inside voice all the time helps me regulate my tone, I think, because it makes it so that I have to pause and pay conscious attention to how loud I am.</p>
+
+				<p>I hope this self reflection doesn’t bore you. I know you like to hear how I think and feel. The next one of these is a little love letter I wrote you a while back, so I think that might be a more engaging “email” to send. I hope this was worth a read anyway.</p>
+
+				<p>Also, if you want to get to this part again, just type in “dev26” on the snake game window. I love you, and I hope you’ve been enjoying the website so far. I can’t wait to spend the 14th with you, and hope we have some days together before then as well! Anyway, this is me, signing off.</p>
+        </div>
+    </div>
+    <div class="footer">
+        <button onclick="goBack()">← Back</button>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const gridSize = 20;
+const tileCount = canvas.width / gridSize;
+
+let snake = [{ x: 10, y: 10 }];
+let dx = 1;
+let dy = 0;
+
+let heart = randomHeart();
+let heartsCollected = 0;
+const goal = 10;
+
+const counter = document.getElementById("counter");
+const snakeWindow = document.getElementById("snakeWindow");
+const mailPopup = document.getElementById("mailPopup");
+const inbox = document.getElementById("inbox");
+
+function randomHeart() {
+    return {
+        x: Math.floor(Math.random() * tileCount),
+        y: Math.floor(Math.random() * tileCount)
+    };
+}
+
+function drawHeart(x, y) {
+    ctx.font = "16px monospace";
+    ctx.fillText("❤️", x * gridSize + 2, y * gridSize + 16);
+}
+
+function gameLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+
+    if (head.x < 0) head.x = tileCount - 1;
+    if (head.x >= tileCount) head.x = 0;
+    if (head.y < 0) head.y = tileCount - 1;
+    if (head.y >= tileCount) head.y = 0;
+
+    snake.unshift(head);
+
+    if (head.x === heart.x && head.y === heart.y) {
+        heartsCollected++;
+        counter.textContent = `${heartsCollected} / 10 ❤️`;
+        heart = randomHeart();
+
+        if (heartsCollected >= goal) {
+            clearInterval(game);
+
+            // 💥 explode shortly after win
+            setTimeout(() => {
+                snakeWindow.classList.add("explode");
+            }, 200);
+
+            // 📬 swap to mail popup
+            setTimeout(() => {
+                snakeWindow.classList.add("hidden");
+                mailPopup.classList.remove("hidden");
+            }, 1000);
+        }
+    } else {
+        snake.pop();
+    }
+
+    ctx.fillStyle = "#000";
+    snake.forEach(p =>
+        ctx.fillRect(p.x * gridSize, p.y * gridSize, gridSize, gridSize)
+    );
+
+    drawHeart(heart.x, heart.y);
+}
+
+document.addEventListener("keydown", e => {
+    if (e.key === "ArrowUp" && dy === 0) { dx = 0; dy = -1; }
+    if (e.key === "ArrowDown" && dy === 0) { dx = 0; dy = 1; }
+    if (e.key === "ArrowLeft" && dx === 0) { dx = -1; dy = 0; }
+    if (e.key === "ArrowRight" && dx === 0) { dx = 1; dy = 0; }
+});
+
+function openInbox() {
+    mailPopup.classList.add("hidden");
+    inbox.classList.remove("hidden");
+}
+
+function goBack() {
+    window.location.href = "loveme.html";
+}
+
+const game = setInterval(gameLoop, 120);
+</script>
+
+<script>
+/* === DEV ACCESS: type "dev26" to auto-complete snake === */
+/* Remove this entire block to disable */
+
+(() => {
+    const DEV_CODE = "dev26";
+    let buffer = "";
+    let used = false;
+
+    document.addEventListener("keydown", (e) => {
+        if (used) return;
+
+        buffer += e.key.toLowerCase();
+        buffer = buffer.slice(-DEV_CODE.length);
+
+        if (buffer === DEV_CODE) {
+            used = true;
+            devFinishSnake();
+        }
+    });
+
+    function devFinishSnake() {
+        // Safety checks
+        if (typeof heartsCollected === "undefined") return;
+        if (typeof goal === "undefined") return;
+
+        heartsCollected = goal;
+        counter.textContent = `${goal} / 10 ❤️`;
+
+        if (typeof game !== "undefined") {
+            clearInterval(game);
+        }
+
+        // Trigger same explosion + mail flow
+        setTimeout(() => {
+            snakeWindow.classList.add("explode");
+        }, 200);
+
+        setTimeout(() => {
+            snakeWindow.classList.add("hidden");
+            mailPopup.classList.remove("hidden");
+        }, 1000);
+    }
+})();
+</script>
+
+
+</body>
+</html>
+
+
+
+
+
+
+

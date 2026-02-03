@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Feb 1</title>
+<style>
+    body {
+        margin: 0;
+        background: #cfcfcf;
+        font-family: "Monaco", "Chicago", monospace;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+    }
+
+    .window {
+        width: 500px;
+        background: #ffffff;
+        border: 2px solid #000;
+        box-shadow: 4px 4px 0 #000;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .titlebar {
+        background: #e0e0e0;
+        border-bottom: 2px solid #000;
+        padding: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+    }
+
+    .controls {
+        display: flex;
+        gap: 4px;
+    }
+
+    .control {
+        width: 10px;
+        height: 10px;
+        border: 1px solid #000;
+        background: #fff;
+    }
+
+    .title {
+        margin-left: 8px;
+    }
+
+    .content {
+        padding: 14px;
+        font-size: 13px;
+        white-space: pre-wrap;
+        line-height: 1.5;
+        flex-grow: 1;
+    }
+
+    .footer {
+        border-top: 1px solid #000;
+        padding: 6px;
+        font-size: 11px;
+        background: #f4f4f4;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .back-btn {
+        font-family: inherit;
+        font-size: 11px;
+        padding: 2px 8px;
+        border: 1px solid #000;
+        background: #fff;
+        cursor: pointer;
+    }
+
+    .back-btn:hover {
+        background: #e0e0e0;
+    }
+</style>
+</head>
+<body>
+
+<div class="window">
+    <div class="titlebar">
+        <div class="controls">
+            <div class="control"></div>
+            <div class="control"></div>
+            <div class="control"></div>
+        </div>
+        <div class="title">Notepad — Feb 1</div>
+    </div>
+
+    <div class="content">
+roses are red
+violets are blue
+every moment
+i think of you
+
+i think of your smile
+i think of your laugh
+i feel incomplete
+without my other half
+
+every room where you aren’t
+every room where you are
+i need you, my love
+wherever you are
+
+to be by my side
+to be my whole world
+my sun, moon and stars
+my heart, your visage swirled
+
+will all that’s been said
+i hope you’ll be mine
+together forever
+till the end of time
+    </div>
+
+    <div class="footer">
+        <button class="back-btn" onclick="window.location.href='loveme.html'">
+            ← back
+        </button>
+        <span>Feb 1 • saved</span>
+    </div>
+</div>
+
+</body>
+</html>
+
