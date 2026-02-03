@@ -52,6 +52,7 @@ button {
 @keyframes explode { to { transform: scale(1.6); opacity: 0; } }
 
 /* Gallery */
+#galleryWindow { display: none; }
 .gallery-window { max-height: 500px; overflow-y: auto; }
 .gallery {
     display: grid;
@@ -66,10 +67,12 @@ button {
     transition: all 0.6s ease;
 }
 .photo.visible { opacity:1; transform:scale(1); }
+.photo img{ width:100%;height:100%;object-fit:cover; }
 </style>
 </head>
 <body>
 
+<!-- Game Window -->
 <div class="window" id="gameWindow">
     <div class="titlebar">GALAGA</div>
     <div class="content">
@@ -78,17 +81,24 @@ button {
     </div>
 </div>
 
-<div class="gallery">
-    <div class="photo"><img src="../images/1.jpeg" alt="Photo 1" style="width:100%;height:100%;object-fit:cover;"></div>
-    <div class="photo"><img src="../images/2.jpeg" alt="Photo 2" style="width:100%;height:100%;object-fit:cover;"></div>
-    <div class="photo"><img src="../images/3.jpeg" alt="Photo 3" style="width:100%;height:100%;object-fit:cover;"></div>
-    <div class="photo"><img src="../images/4.jpeg" alt="Photo 4" style="width:100%;height:100%;object-fit:cover;"></div>
-    <div class="photo"><img src="../images/5.jpeg" alt="Photo 5" style="width:100%;height:100%;object-fit:cover;"></div>
-    <div class="photo"><img src="../images/6.jpeg" alt="Photo 6" style="width:100%;height:100%;object-fit:cover;"></div>
-    <div class="photo"><img src="../images/7.jpeg" alt="Photo 7" style="width:100%;height:100%;object-fit:cover;"></div>
-    <div class="photo"><img src="../images/8.jpeg" alt="Photo 8" style="width:100%;height:100%;object-fit:cover;"></div>
-    <div class="photo"><img src="../images/9.jpeg" alt="Photo 9" style="width:100%;height:100%;object-fit:cover;"></div>
-    <div class="photo"><img src="../images/10.jpeg" alt="Photo 10" style="width:100%;height:100%;object-fit:cover;"></div>
+<!-- Gallery Window -->
+<div class="window" id="galleryWindow">
+    <div class="titlebar">PHOTO GALLERY</div>
+    <div class="content gallery-window">
+        <div class="gallery">
+            <div class="photo"><img src="../images/1.jpeg" alt="Photo 1"></div>
+            <div class="photo"><img src="../images/2.jpeg" alt="Photo 2"></div>
+            <div class="photo"><img src="../images/3.jpeg" alt="Photo 3"></div>
+            <div class="photo"><img src="../images/4.jpeg" alt="Photo 4"></div>
+            <div class="photo"><img src="../images/5.jpeg" alt="Photo 5"></div>
+            <div class="photo"><img src="../images/6.jpeg" alt="Photo 6"></div>
+            <div class="photo"><img src="../images/7.jpeg" alt="Photo 7"></div>
+            <div class="photo"><img src="../images/8.jpeg" alt="Photo 8"></div>
+            <div class="photo"><img src="../images/9.jpeg" alt="Photo 9"></div>
+            <div class="photo"><img src="../images/10.jpeg" alt="Photo 10"></div>
+        </div>
+        <button onclick="location.href='../loveme.html'">← Back</button>
+    </div>
 </div>
 
 <script>
@@ -119,9 +129,9 @@ function resetGame() {
 // SPAWN ENEMIES BASED ON WAVE
 function spawnWave() {
     enemies = [];
-    const counts = [6,6,9];
+    const counts = [6,4,3]; // fewer enemies on later waves
+    const cols = 3;
     const num = counts[wave-1];
-    const cols = 3 + wave; // 4 or 5
     for (let i=0;i<num;i++){
         const col = i % cols;
         const row = Math.floor(i/cols);
@@ -137,6 +147,7 @@ function spawnWave() {
     }
 }
 
+// DEV KEYS
 let devBuffer="";
 document.addEventListener("keydown", e=>{
     if(e.key==="ArrowLeft") player.x-=10;
@@ -190,9 +201,7 @@ function update(){
             ctx.font="16px monospace";
             ctx.fillText("👾", e.x, e.y);
 
-            bullets.forEach(b=>{
-                if(b.x>e.x && b.x<e.x+20 && b.y>e.y-16 && b.y<e.y){e.alive=false;b.y=-10;}
-            });
+            bullets.forEach(b=>{if(b.x>e.x && b.x<e.x+20 && b.y>e.y-16 && b.y<e.y){e.alive=false;b.y=-10;}});
         });
 
         if(enemies.every(e=>!e.alive)){
@@ -209,27 +218,42 @@ function update(){
         ctx.fillRect(boss.x,boss.y,100,20);
 
         if(Math.random()<(boss.rage?0.08:0.04)) enemyBullets.push({x:boss.x+Math.random()*100,y:boss.y+20});
-        bullets.forEach(b=>{
-            if(b.x>boss.x && b.x<boss.x+100 && b.y<boss.y+20){boss.hp--;b.y=-10;}
-        });
+        bullets.forEach(b=>{if(b.x>boss.x && b.x<boss.x+100 && b.y<boss.y+20){boss.hp--;b.y=-10;}});
         if(boss.hp<=0) win();
         statusText.textContent=`Boss HP ${boss.hp} | Lives ${lives}`;
     }
 
-    enemyBullets.forEach(b=>{
-        if(b.x>player.x && b.x<player.x+20 && b.y>player.y){b.y=999;lives--;}
-    });
+    enemyBullets.forEach(b=>{if(b.x>player.x && b.x<player.x+20 && b.y>player.y){b.y=999;lives--;}});
+
     if(lives<=0) gameOver();
 }
 
-function gameOver(){clearInterval(loop);statusText.innerHTML=`<button onclick="resetGame()">START OVER?</button>`;}
-function win(){clearInterval(loop);document.body.classList.add("shake");document.getElementById("gameWindow").classList.add("explode");setTimeout(()=>{document.body.classList.remove("shake");document.getElementById("gameWindow").classList.add("hidden");document.getElementById("galleryWindow").classList.remove("hidden");revealGallery();},800);}
-function revealGallery(){document.querySelectorAll(".photo").forEach(p=>{const obs=new IntersectionObserver(e=>e.forEach(x=>x.isIntersecting&&x.target.classList.add("visible")),{threshold:0.2});obs.observe(p);});}
+function gameOver(){
+    clearInterval(loop);
+    statusText.innerHTML=`<button onclick="resetGame()">START OVER?</button>`;
+}
+
+function win(){
+    clearInterval(loop);
+    document.body.classList.add("shake");
+    document.getElementById("gameWindow").classList.add("explode");
+    setTimeout(()=>{
+        document.body.classList.remove("shake");
+        document.getElementById("gameWindow").classList.add("hidden");
+        document.getElementById("galleryWindow").style.display="block";
+        revealGallery();
+    },500);
+}
+
+function revealGallery(){
+    document.querySelectorAll(".photo").forEach(p=>{
+        const obs=new IntersectionObserver(e=>e.forEach(x=>x.isIntersecting && x.target.classList.add("visible")),{threshold:0.2});
+        obs.observe(p);
+    });
+}
 
 resetGame();
 </script>
 
 </body>
 </html>
-
-
