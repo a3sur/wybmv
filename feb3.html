@@ -133,26 +133,43 @@ let bullets = [];
 let enemyBullets = [];
 let enemies = [];
 let boss = null;
+
+let wave = 1;
 let phase = "wave";
 let loop;
 
-/* Create enemies */
-for (let i = 0; i < 20; i++) {
-    enemies.push({
-        x: 40 + (i % 5) * 90,
-        y: 40 + Math.floor(i / 5) * 40,
-        baseX: 40 + (i % 5) * 90,
-        alive: true,
-        dive: false,
-        t: 0
-    });
-}
+let lastShot = 0;
+const SHOT_COOLDOWN = 350;   // ms
+const MAX_BULLETS = 3;
 
 document.addEventListener("keydown", e => {
     if (e.key === "ArrowLeft") player.x -= 10;
     if (e.key === "ArrowRight") player.x += 10;
-    if (e.key === " ") bullets.push({ x: player.x + 10, y: player.y });
+
+    if (e.key === " ") {
+        const now = Date.now();
+        if (now - lastShot > SHOT_COOLDOWN && bullets.length < MAX_BULLETS) {
+            bullets.push({ x: player.x + 10, y: player.y });
+            lastShot = now;
+        }
+    }
 });
+
+function spawnWave(num) {
+    enemies = [];
+    for (let i = 0; i < num; i++) {
+        enemies.push({
+            x: 40 + (i % 5) * 90,
+            y: 40 + Math.floor(i / 5) * 40,
+            baseX: 40 + (i % 5) * 90,
+            alive: true,
+            dive: false,
+            t: 0
+        });
+    }
+}
+
+spawnWave(8);
 
 function update() {
     ctx.clearRect(0,0,500,320);
@@ -166,27 +183,34 @@ function update() {
         b.y -= 6;
         ctx.fillRect(b.x, b.y, 2, 6);
     });
+    bullets = bullets.filter(b => b.y > -10);
 
     /* Enemy bullets */
     ctx.fillStyle = "orange";
     enemyBullets.forEach(b => {
-        b.y += 4;
+        b.y += 4 + wave;
         ctx.fillRect(b.x, b.y, 3, 6);
     });
+    enemyBullets = enemyBullets.filter(b => b.y < 330);
 
     if (phase === "wave") {
         enemies.forEach(e => {
             if (!e.alive) return;
 
-            if (!e.dive && Math.random() < 0.002) {
+            if (!e.dive && Math.random() < 0.002 * wave) {
                 e.dive = true;
                 e.t = 0;
             }
 
             if (e.dive) {
-                e.t += 0.03;
-                e.y += 2;
-                e.x = e.baseX + Math.sin(e.t * 4) * 40;
+                e.t += 0.04 + wave * 0.01;
+                e.y += 2 + wave;
+                e.x = e.baseX + Math.sin(e.t * 4) * (40 + wave * 5);
+
+                if (Math.random() < 0.003 * wave) {
+                    enemyBullets.push({ x: e.x + 10, y: e.y + 10 });
+                }
+
                 if (e.y > 260) {
                     e.y = 40;
                     e.dive = false;
@@ -197,7 +221,10 @@ function update() {
             ctx.fillRect(e.x, e.y, 20, 10);
 
             bullets.forEach(b => {
-                if (b.x > e.x && b.x < e.x + 20 && b.y > e.y && b.y < e.y + 10) {
+                if (
+                    b.x > e.x && b.x < e.x + 20 &&
+                    b.y > e.y && b.y < e.y + 10
+                ) {
                     e.alive = false;
                     b.y = -10;
                 }
@@ -205,11 +232,19 @@ function update() {
         });
 
         const remaining = enemies.filter(e => e.alive).length;
-        statusText.textContent = "Enemies left: " + remaining;
+        statusText.textContent = `Wave ${wave} — Enemies left: ${remaining}`;
 
         if (remaining === 0) {
-            phase = "boss";
-            boss = { x: 200, y: 40, hp: 25 };
+            if (wave === 1) {
+                wave = 2;
+                spawnWave(12);
+            } else if (wave === 2) {
+                wave = 3;
+                spawnWave(20);
+            } else {
+                phase = "boss";
+                boss = { x: 200, y: 40, hp: 30 };
+            }
         }
     }
 
@@ -217,12 +252,15 @@ function update() {
         ctx.fillStyle = "purple";
         ctx.fillRect(boss.x, boss.y, 100, 25);
 
-        if (Math.random() < 0.03) {
-            enemyBullets.push({ x: boss.x + 50, y: boss.y + 25 });
+        if (Math.random() < 0.04) {
+            enemyBullets.push({ x: boss.x + Math.random() * 100, y: boss.y + 25 });
         }
 
         bullets.forEach(b => {
-            if (b.x > boss.x && b.x < boss.x + 100 && b.y > boss.y && b.y < boss.y + 25) {
+            if (
+                b.x > boss.x && b.x < boss.x + 100 &&
+                b.y > boss.y && b.y < boss.y + 25
+            ) {
                 boss.hp--;
                 b.y = -10;
             }
@@ -254,7 +292,7 @@ function win() {
 
 loop = setInterval(update, 30);
 
-/* Gallery scroll reveal */
+/* Gallery reveal */
 function observeGallery() {
     const imgs = document.querySelectorAll(".photo");
     const obs = new IntersectionObserver(entries => {
@@ -262,10 +300,11 @@ function observeGallery() {
             if (e.isIntersecting) e.target.classList.add("visible");
         });
     }, { threshold: 0.2 });
-
     imgs.forEach(i => obs.observe(i));
 }
 </script>
 
+
 </body>
 </html>
+
