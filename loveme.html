@@ -135,11 +135,11 @@ for (let day = 1; day <= 14; day++) {
         div.classList.add("locked");
     } else {
         div.onclick = () => {
-            // Redirect day 14 to vday.html, others to febX.html
+            // Redirect day 14 to vday.html, others to febX.html, inside 'days/' folder
             if (day === 14) {
-                window.location.href = `vday.html`;
+                window.location.href = `days/vday.html`;
             } else {
-                window.location.href = `feb${day}.html`;
+                window.location.href = `days/feb${day}.html`;
             }
         };
     }
@@ -147,7 +147,6 @@ for (let day = 1; day <= 14; day++) {
     calendar.appendChild(div);
 }
 </script>
-
 
 </body>
 </html>
