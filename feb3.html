@@ -98,7 +98,6 @@ button {
 </div>
 
 <script>
-/* ===== GAME CORE ===== */
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const statusText = document.getElementById("status");
@@ -123,34 +122,38 @@ function resetGame() {
     loop = setInterval(update, 30);
 }
 
-/* Spawn reduced enemies based on wave */
+// SPAWN ENEMIES BASED ON WAVE
 function spawnWave() {
     enemies = [];
-    const counts = [6, 6, 9]; // wave 1=6, wave2=6, wave3=9
-    const num = counts[wave -1];
-    const cols = 3 + wave; // 3,4,5
-    for(let i=0;i<num;i++){
-        const col=i%cols, row=Math.floor(i/cols);
-        enemies.push({x:60+col*80, y:40+row*40, baseX:60+col*80, alive:true, dive:false, t:Math.random()*Math.PI});
+    const counts = [6,6,9];
+    const num = counts[wave-1];
+    const cols = 3 + wave; // 4 or 5
+    for (let i=0;i<num;i++){
+        const col = i % cols;
+        const row = Math.floor(i/cols);
+        enemies.push({
+            x:60+col*80,
+            y:40+row*40,
+            baseX:60+col*80,
+            baseY:40+row*40,
+            alive:true,
+            dive:false,
+            t:Math.random()*Math.PI
+        });
     }
 }
 
-/* Player input */
 let devBuffer="";
 document.addEventListener("keydown", e=>{
     if(e.key==="ArrowLeft") player.x-=10;
     if(e.key==="ArrowRight") player.x+=10;
-
-    // wraparound
     if(player.x<-20) player.x=canvas.width;
     if(player.x>canvas.width) player.x=-20;
-
     if(e.key===" " && Date.now()-lastShot>SHOT_COOLDOWN && bullets.length<MAX_BULLETS){
-        bullets.push({x:player.x+10, y:player.y});
+        bullets.push({x:player.x+10,y:player.y});
         lastShot=Date.now();
     }
 
-    // Dev codes
     devBuffer+=e.key.toLowerCase();
     if(devBuffer.endsWith("dev14")) nextWave();
     if(devBuffer.endsWith("dev26")) win();
@@ -181,34 +184,37 @@ function update(){
 
     if(phase==="wave"){
         enemies.forEach(e=>{
-            if(!e.alive)return;
-            e.x=e.baseX+Math.sin(e.t+=0.03)*20;
+            if(!e.alive) return;
+            e.x = e.baseX + Math.sin(e.t+=0.03)*20;
             if(!e.dive && Math.random()<0.002)e.dive=true;
             if(e.dive){
                 e.y+=2;
                 if(Math.random()<0.01) enemyBullets.push({x:e.x+10,y:e.y});
-                if(e.y>260){e.y=40;e.dive=false;}
-            }else{
-                e.x+= (e.baseX-e.x)*0.05;
-                e.y+= (e.baseY-e.y)*0.05;
-            }
+                if(e.y>260){e.y=e.baseY;e.dive=false;}
+            } else { e.x+=(e.baseX-e.x)*0.05; e.y+=(e.baseY-e.y)*0.05; }
+
             ctx.font="16px monospace";
-            ctx.fillText("👾",e.x,e.y);
+            ctx.fillText("👾", e.x, e.y);
+
             bullets.forEach(b=>{
-                if(b.x>e.x && b.x<e.x+20 && b.y>e.y-16 && b.y<e.y) {e.alive=false;b.y=-10;}
+                if(b.x>e.x && b.x<e.x+20 && b.y>e.y-16 && b.y<e.y){e.alive=false;b.y=-10;}
             });
         });
-        if(enemies.every(e=>!e.alive)) nextWave();
+
+        if(enemies.every(e=>!e.alive)){
+            if(wave<3){ wave++; spawnWave(); } 
+            else { phase="boss"; boss={x:200,y:40,hp:25,rage:false}; }
+        }
         statusText.textContent=`Wave ${wave} | Lives ${lives}`;
     }
 
     if(phase==="boss"){
         if(!boss.rage && boss.hp<10) boss.rage=true;
-        boss.x+= boss.rage ? Math.sin(Date.now()/100)*6 : Math.sin(Date.now()/200)*2;
-        ctx.fillStyle=boss.rage?"crimson":"purple";
+        boss.x += boss.rage ? Math.sin(Date.now()/100)*6 : Math.sin(Date.now()/200)*2;
+        ctx.fillStyle = boss.rage ? "crimson":"purple";
         ctx.fillRect(boss.x,boss.y,100,20);
 
-        if(Math.random()<(boss.rage?0.08:0.04)) enemyBullets.push({x:boss.x+Math.random()*100, y:boss.y+20});
+        if(Math.random()<(boss.rage?0.08:0.04)) enemyBullets.push({x:boss.x+Math.random()*100,y:boss.y+20});
         bullets.forEach(b=>{
             if(b.x>boss.x && b.x<boss.x+100 && b.y<boss.y+20){boss.hp--;b.y=-10;}
         });
@@ -223,26 +229,12 @@ function update(){
 }
 
 function gameOver(){clearInterval(loop);statusText.innerHTML=`<button onclick="resetGame()">START OVER?</button>`;}
-function win(){
-    clearInterval(loop);
-    document.body.classList.add("shake");
-    document.getElementById("gameWindow").classList.add("explode");
-    setTimeout(()=>{
-        document.body.classList.remove("shake");
-        document.getElementById("gameWindow").classList.add("hidden");
-        document.getElementById("galleryWindow").classList.remove("hidden");
-        revealGallery();
-    },800);
-}
-
-function revealGallery(){
-    document.querySelectorAll(".photo").forEach(p=>{
-        const obs=new IntersectionObserver(e=>e.forEach(x=>x.isIntersecting&&x.target.classList.add("visible")), {threshold:0.2});
-        obs.observe(p);
-    });
-}
+function win(){clearInterval(loop);document.body.classList.add("shake");document.getElementById("gameWindow").classList.add("explode");setTimeout(()=>{document.body.classList.remove("shake");document.getElementById("gameWindow").classList.add("hidden");document.getElementById("galleryWindow").classList.remove("hidden");revealGallery();},800);}
+function revealGallery(){document.querySelectorAll(".photo").forEach(p=>{const obs=new IntersectionObserver(e=>e.forEach(x=>x.isIntersecting&&x.target.classList.add("visible")),{threshold:0.2});obs.observe(p);});}
 
 resetGame();
 </script>
+
 </body>
 </html>
+
