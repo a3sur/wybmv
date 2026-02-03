@@ -128,19 +128,31 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const statusText = document.getElementById("status");
 
-let player = { x: 240, y: 285 };
-let bullets = [];
-let enemyBullets = [];
-let enemies = [];
-let boss = null;
-
-let wave = 1;
-let phase = "wave";
-let loop;
+let player, bullets, enemyBullets, enemies, boss;
+let wave, phase, loop;
+let lives;
 
 let lastShot = 0;
-const SHOT_COOLDOWN = 350;   // ms
+const SHOT_COOLDOWN = 250;   // slightly faster reload
 const MAX_BULLETS = 3;
+
+function resetGame() {
+    player = { x: 240, y: 285 };
+    bullets = [];
+    enemyBullets = [];
+    enemies = [];
+    boss = null;
+
+    wave = 1;
+    phase = "wave";
+    lives = 3;
+
+    spawnWave(8);
+    statusText.innerHTML = "Wave 1 — Enemies left: 8";
+
+    if (loop) clearInterval(loop);
+    loop = setInterval(update, 30);
+}
 
 document.addEventListener("keydown", e => {
     if (e.key === "ArrowLeft") player.x -= 10;
@@ -169,8 +181,6 @@ function spawnWave(num) {
     }
 }
 
-spawnWave(8);
-
 function update() {
     ctx.clearRect(0,0,500,320);
 
@@ -188,26 +198,42 @@ function update() {
     /* Enemy bullets */
     ctx.fillStyle = "orange";
     enemyBullets.forEach(b => {
-        b.y += 4 + wave;
+        b.y += 3 + wave * 0.5; // slower than before
         ctx.fillRect(b.x, b.y, 3, 6);
     });
     enemyBullets = enemyBullets.filter(b => b.y < 330);
+
+    /* Player hit detection */
+    enemyBullets.forEach(b => {
+        if (
+            b.x > player.x && b.x < player.x + 20 &&
+            b.y > player.y && b.y < player.y + 10
+        ) {
+            b.y = 999;
+            lives--;
+        }
+    });
+
+    if (lives <= 0) {
+        gameOver();
+        return;
+    }
 
     if (phase === "wave") {
         enemies.forEach(e => {
             if (!e.alive) return;
 
-            if (!e.dive && Math.random() < 0.002 * wave) {
+            if (!e.dive && Math.random() < 0.0015 * wave) {
                 e.dive = true;
                 e.t = 0;
             }
 
             if (e.dive) {
-                e.t += 0.04 + wave * 0.01;
-                e.y += 2 + wave;
-                e.x = e.baseX + Math.sin(e.t * 4) * (40 + wave * 5);
+                e.t += 0.03 + wave * 0.008;   // slower dive
+                e.y += 1.5 + wave * 0.5;
+                e.x = e.baseX + Math.sin(e.t * 4) * (30 + wave * 4);
 
-                if (Math.random() < 0.003 * wave) {
+                if (Math.random() < 0.002 * wave) {
                     enemyBullets.push({ x: e.x + 10, y: e.y + 10 });
                 }
 
@@ -232,16 +258,12 @@ function update() {
         });
 
         const remaining = enemies.filter(e => e.alive).length;
-        statusText.textContent = `Wave ${wave} — Enemies left: ${remaining}`;
+        statusText.textContent = `Wave ${wave} — Enemies left: ${remaining} | Lives: ${lives}`;
 
         if (remaining === 0) {
-            if (wave === 1) {
-                wave = 2;
-                spawnWave(12);
-            } else if (wave === 2) {
-                wave = 3;
-                spawnWave(20);
-            } else {
+            if (wave === 1) { wave = 2; spawnWave(12); }
+            else if (wave === 2) { wave = 3; spawnWave(20); }
+            else {
                 phase = "boss";
                 boss = { x: 200, y: 40, hp: 30 };
             }
@@ -252,8 +274,11 @@ function update() {
         ctx.fillStyle = "purple";
         ctx.fillRect(boss.x, boss.y, 100, 25);
 
-        if (Math.random() < 0.04) {
-            enemyBullets.push({ x: boss.x + Math.random() * 100, y: boss.y + 25 });
+        if (Math.random() < 0.03) {
+            enemyBullets.push({
+                x: boss.x + Math.random() * 100,
+                y: boss.y + 25
+            });
         }
 
         bullets.forEach(b => {
@@ -266,12 +291,19 @@ function update() {
             }
         });
 
-        statusText.textContent = "Boss HP: " + boss.hp;
+        statusText.textContent = `Boss HP: ${boss.hp} | Lives: ${lives}`;
 
-        if (boss.hp <= 0) {
-            win();
-        }
+        if (boss.hp <= 0) win();
     }
+}
+
+function gameOver() {
+    clearInterval(loop);
+    statusText.innerHTML = `
+        <div style="margin-top:6px">
+            GAME OVER<br>
+            <button onclick="resetGame()">START OVER?</button>
+        </div>`;
 }
 
 function win() {
@@ -290,7 +322,7 @@ function win() {
     }, 1400);
 }
 
-loop = setInterval(update, 30);
+resetGame();
 
 /* Gallery reveal */
 function observeGallery() {
@@ -304,7 +336,8 @@ function observeGallery() {
 }
 </script>
 
-
+    
 </body>
 </html>
+
 
