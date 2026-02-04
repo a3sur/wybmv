@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>feb4 — Jolene Simulator</title>
+<style>
+body{
+    margin:0;
+    background:#c0c0c0;
+    font-family:Chicago, monospace;
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    height:100vh;
+}
+.window{
+    margin-top:20px;
+    width:520px;
+    background:#fff;
+    border:2px solid #000;
+    box-shadow:4px 4px #000;
+}
+.titlebar{
+    background:#000;
+    color:#fff;
+    padding:4px 8px;
+    font-size:14px;
+}
+.content{
+    padding:10px;
+}
+canvas{
+    display:block;
+    margin:auto;
+    background:#111;
+}
+#hud{
+    display:flex;
+    justify-content:space-between;
+    margin-top:6px;
+    font-size:14px;
+}
+button{
+    font-family:monospace;
+    padding:4px 8px;
+    margin:4px;
+    cursor:pointer;
+}
+.hidden{display:none;}
+</style>
+</head>
+<body>
+
+<div class="window">
+    <div class="titlebar">JO L E N E  &nbsp; S I M U L A T O R</div>
+    <div class="content">
+        <canvas id="game" width="480" height="320"></canvas>
+        <div id="hud">
+            <div>Items: <span id="score">0</span>/7</div>
+            <div>Time: <span id="time">0.0</span>s</div>
+            <div>Best: <span id="best">--</span></div>
+        </div>
+        <div id="end" class="hidden" style="text-align:center;margin-top:10px;">
+            <div id="result"></div>
+            <button onclick="startGame()">Replay</button>
+            <button onclick="location.href='../loveme.html'">Back</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const scoreEl = document.getElementById("score");
+const timeEl = document.getElementById("time");
+const bestEl = document.getElementById("best");
+const endEl = document.getElementById("end");
+const resultEl = document.getElementById("result");
+
+const TILE = 20;
+const COLS = 24;
+const ROWS = 16;
+
+let player, items, walls, collected, startTime, timer, playing;
+
+const ITEM_LIST = [
+    {name:"Cat", emoji:"🐱"},
+    {name:"Toilet Paper", emoji:"🧻"},
+    {name:"Homework", emoji:"📘"},
+    {name:"Pen", emoji:"🖊️"},
+    {name:"Dog", emoji:"🐶"},
+    {name:"Banana", emoji:"🍌"},
+    {name:"Chicken Wing", emoji:"🍗"}
+];
+
+const bestRecord = localStorage.getItem("joleneBest");
+if(bestRecord) bestEl.textContent = bestRecord + "s";
+
+function startGame(){
+    collected = 0;
+    playing = true;
+    endEl.classList.add("hidden");
+
+    player = {x:1,y:1};
+    items = ITEM_LIST.map(i=>({
+        ...i,
+        x:rand(2,COLS-2),
+        y:rand(2,ROWS-2),
+        dx:Math.random()<0.5?1:-1,
+        dy:Math.random()<0.5?1:-1,
+        got:false
+    }));
+
+    walls = [];
+    for(let i=0;i<80;i++){
+        walls.push({x:rand(0,COLS-1),y:rand(0,ROWS-1)});
+    }
+
+    startTime = performance.now();
+    scoreEl.textContent = 0;
+    timer = requestAnimationFrame(loop);
+}
+
+function rand(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+
+document.addEventListener("keydown",e=>{
+    if(!playing) return;
+    let nx=player.x, ny=player.y;
+    if(e.key==="ArrowUp") ny--;
+    if(e.key==="ArrowDown") ny++;
+    if(e.key==="ArrowLeft") nx--;
+    if(e.key==="ArrowRight") nx++;
+
+    if(nx>=0&&ny>=0&&nx<COLS&&ny<ROWS&&!hitWall(nx,ny)){
+        player.x=nx; player.y=ny;
+    }
+});
+
+function hitWall(x,y){
+    return walls.some(w=>w.x===x&&w.y===y);
+}
+
+function loop(){
+    if(!playing) return;
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // walls
+    ctx.fillStyle="#333";
+    walls.forEach(w=>ctx.fillRect(w.x*TILE,w.y*TILE,TILE,TILE));
+
+    // items move
+    items.forEach(i=>{
+        if(i.got) return;
+        if(Math.random()<0.3){
+            let nx=i.x+i.dx, ny=i.y+i.dy;
+            if(nx<1||ny<1||nx>=COLS-1||ny>=ROWS-1||hitWall(nx,ny)){
+                i.dx*=-1; i.dy*=-1;
+            } else {
+                i.x=nx; i.y=ny;
+            }
+        }
+        ctx.font="16px monospace";
+        ctx.fillText(i.emoji,i.x*TILE+2,i.y*TILE+16);
+
+        if(player.x===i.x&&player.y===i.y){
+            i.got=true;
+            collected++;
+            scoreEl.textContent = collected;
+        }
+    });
+
+    // player
+    ctx.fillStyle="lime";
+    ctx.fillRect(player.x*TILE,player.y*TILE,TILE,TILE);
+
+    const elapsed=((performance.now()-startTime)/1000).toFixed(1);
+    timeEl.textContent=elapsed;
+
+    if(collected>=7){
+        finishGame(elapsed);
+        return;
+    }
+
+    timer=requestAnimationFrame(loop);
+}
+
+function finishGame(time){
+    playing=false;
+    cancelAnimationFrame(timer);
+    endEl.classList.remove("hidden");
+    resultEl.textContent=`You got everything in ${time}s!`;
+
+    if(!bestRecord||time<bestRecord){
+        localStorage.setItem("joleneBest",time);
+        bestEl.textContent=time+"s";
+    }
+}
+
+startGame();
+</script>
+
+</body>
+</html>
