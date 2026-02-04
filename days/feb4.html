@@ -10,8 +10,6 @@ body{
     font-family:Chicago, monospace;
     display:flex;
     justify-content:center;
-    align-items:flex-start;
-    height:100vh;
 }
 .window{
     margin-top:20px;
@@ -24,35 +22,22 @@ body{
     background:#000;
     color:#fff;
     padding:4px 8px;
-    font-size:14px;
 }
-.content{
-    padding:10px;
-}
-canvas{
-    display:block;
-    margin:auto;
-    background:#111;
-}
+.content{padding:10px;}
+canvas{background:#111;display:block;margin:auto;}
 #hud{
     display:flex;
     justify-content:space-between;
     margin-top:6px;
-    font-size:14px;
 }
-button{
-    font-family:monospace;
-    padding:4px 8px;
-    margin:4px;
-    cursor:pointer;
-}
+button{font-family:monospace;padding:4px 8px;cursor:pointer;}
 .hidden{display:none;}
 </style>
 </head>
 <body>
 
 <div class="window">
-    <div class="titlebar">JO L E N E  &nbsp; S I M U L A T O R</div>
+    <div class="titlebar">JO L E N E &nbsp; S I M U L A T O R</div>
     <div class="content">
         <canvas id="game" width="480" height="320"></canvas>
         <div id="hud">
@@ -72,17 +57,11 @@ button{
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-const scoreEl = document.getElementById("score");
-const timeEl = document.getElementById("time");
-const bestEl = document.getElementById("best");
-const endEl = document.getElementById("end");
-const resultEl = document.getElementById("result");
-
 const TILE = 20;
 const COLS = 24;
 const ROWS = 16;
 
-let player, items, walls, collected, startTime, timer, playing;
+let grid, player, items, collected, startTime, playing, frame;
 
 const ITEM_LIST = [
     {name:"Cat", emoji:"🐱"},
@@ -94,35 +73,62 @@ const ITEM_LIST = [
     {name:"Chicken Wing", emoji:"🍗"}
 ];
 
-const bestRecord = localStorage.getItem("joleneBest");
-if(bestRecord) bestEl.textContent = bestRecord + "s";
+const scoreEl = score;
+const timeEl = time;
+const bestEl = best;
+const endEl = end;
+const resultEl = result;
+
+const saved = localStorage.getItem("joleneBest");
+if(saved) bestEl.textContent = saved + "s";
 
 function startGame(){
     collected = 0;
+    frame = 0;
     playing = true;
     endEl.classList.add("hidden");
 
+    generateMaze();
     player = {x:1,y:1};
-    items = ITEM_LIST.map(i=>({
-        ...i,
-        x:rand(2,COLS-2),
-        y:rand(2,ROWS-2),
-        dx:Math.random()<0.5?1:-1,
-        dy:Math.random()<0.5?1:-1,
-        got:false
-    }));
 
-    walls = [];
-    for(let i=0;i<80;i++){
-        walls.push({x:rand(0,COLS-1),y:rand(0,ROWS-1)});
-    }
+    items = ITEM_LIST.map(i=>spawnItem(i));
 
     startTime = performance.now();
     scoreEl.textContent = 0;
-    timer = requestAnimationFrame(loop);
+    requestAnimationFrame(loop);
 }
 
-function rand(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+function generateMaze(){
+    grid = Array.from({length:ROWS},()=>Array(COLS).fill(1));
+
+    function carve(x,y){
+        grid[y][x]=0;
+        shuffle([[2,0],[-2,0],[0,2],[0,-2]]).forEach(([dx,dy])=>{
+            const nx=x+dx, ny=y+dy;
+            if(nx>0&&ny>0&&nx<COLS-1&&ny<ROWS-1&&grid[ny][nx]){
+                grid[y+dy/2][x+dx/2]=0;
+                carve(nx,ny);
+            }
+        });
+    }
+    carve(1,1);
+}
+
+function spawnItem(base){
+    let x,y;
+    do{
+        x = rand(1,COLS-2);
+        y = rand(1,ROWS-2);
+    }while(grid[y][x] || (x===1&&y===1));
+
+    return {
+        ...base,
+        x,y,
+        dx:0,dy:0,
+        cooldown: rand(20,60),
+        got:false
+    };
+}
 
 document.addEventListener("keydown",e=>{
     if(!playing) return;
@@ -131,43 +137,54 @@ document.addEventListener("keydown",e=>{
     if(e.key==="ArrowDown") ny++;
     if(e.key==="ArrowLeft") nx--;
     if(e.key==="ArrowRight") nx++;
-
-    if(nx>=0&&ny>=0&&nx<COLS&&ny<ROWS&&!hitWall(nx,ny)){
+    if(!grid[ny]?.[nx]){
         player.x=nx; player.y=ny;
     }
 });
 
-function hitWall(x,y){
-    return walls.some(w=>w.x===x&&w.y===y);
-}
-
 function loop(){
     if(!playing) return;
-
+    frame++;
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    // walls
+    // draw maze
     ctx.fillStyle="#333";
-    walls.forEach(w=>ctx.fillRect(w.x*TILE,w.y*TILE,TILE,TILE));
+    for(let y=0;y<ROWS;y++){
+        for(let x=0;x<COLS;x++){
+            if(grid[y][x]) ctx.fillRect(x*TILE,y*TILE,TILE,TILE);
+        }
+    }
 
-    // items move
+    // items AI
     items.forEach(i=>{
         if(i.got) return;
-        if(Math.random()<0.3){
-            let nx=i.x+i.dx, ny=i.y+i.dy;
-            if(nx<1||ny<1||nx>=COLS-1||ny>=ROWS-1||hitWall(nx,ny)){
-                i.dx*=-1; i.dy*=-1;
-            } else {
+
+        i.cooldown--;
+        if(i.cooldown<=0){
+            const dirs = shuffle([[1,0],[-1,0],[0,1],[0,-1]]);
+            for(const [dx,dy] of dirs){
+                if(!grid[i.y+dy]?.[i.x+dx]){
+                    i.dx=dx; i.dy=dy;
+                    break;
+                }
+            }
+            i.cooldown = rand(20,50);
+        }
+
+        if(frame%15===0){
+            const nx=i.x+i.dx, ny=i.y+i.dy;
+            if(!grid[ny]?.[nx]){
                 i.x=nx; i.y=ny;
             }
         }
+
         ctx.font="16px monospace";
         ctx.fillText(i.emoji,i.x*TILE+2,i.y*TILE+16);
 
         if(player.x===i.x&&player.y===i.y){
             i.got=true;
             collected++;
-            scoreEl.textContent = collected;
+            scoreEl.textContent=collected;
         }
     });
 
@@ -179,27 +196,29 @@ function loop(){
     timeEl.textContent=elapsed;
 
     if(collected>=7){
-        finishGame(elapsed);
+        finish(elapsed);
         return;
     }
 
-    timer=requestAnimationFrame(loop);
+    requestAnimationFrame(loop);
 }
 
-function finishGame(time){
+function finish(t){
     playing=false;
-    cancelAnimationFrame(timer);
     endEl.classList.remove("hidden");
-    resultEl.textContent=`You got everything in ${time}s!`;
+    resultEl.textContent=`You collected everything in ${t}s!`;
 
-    if(!bestRecord||time<bestRecord){
-        localStorage.setItem("joleneBest",time);
-        bestEl.textContent=time+"s";
+    const best = localStorage.getItem("joleneBest");
+    if(!best || t < best){
+        localStorage.setItem("joleneBest",t);
+        bestEl.textContent=t+"s";
     }
 }
 
+function rand(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function shuffle(a){return a.sort(()=>Math.random()-0.5);}
+
 startGame();
 </script>
-
 </body>
 </html>
