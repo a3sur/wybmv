@@ -122,10 +122,9 @@ function resetGame() {
     loop = setInterval(update, 30);
 }
 
-// SPAWN ENEMIES
 function spawnWave() {
     enemies = [];
-    const counts = [4,5,6]; // wave 1 → 4, wave 2 → 5, wave 3 → 6
+    const counts = [4,5,6];
     const cols = 3;
     const num = counts[wave-1];
 
@@ -157,20 +156,14 @@ document.addEventListener("keydown", e => {
     }
 
     devBuffer += e.key.toLowerCase();
-    if (devBuffer.endsWith("dev14")) nextWave();
+    if (devBuffer.endsWith("dev14")) enemies.forEach(e => e.alive = false);
     if (devBuffer.endsWith("dev26")) win();
     if (devBuffer.length > 10) devBuffer = "";
 });
 
-function nextWave(){
-    if (phase === "wave") enemies.forEach(e => e.alive = false);
-    else if (phase === "boss") boss.hp = 0;
-}
-
 function update() {
     ctx.clearRect(0, 0, 500, 320);
 
-    // player
     ctx.fillStyle = "lime";
     ctx.fillRect(player.x, player.y, 20, 10);
 
@@ -183,10 +176,12 @@ function update() {
 
     if (phase === "wave") {
 
-        // wave scaling (subtle but noticeable)
         const speedMul   = 1 + (wave - 1) * 0.08;
         const diveChance = 0.0018 + (wave - 1) * 0.0012;
         const diveSpeed  = 2 + (wave - 1) * 0.4;
+
+        // NEW: formation shooting chance per wave
+        const idleShootChance = 0.0006 + (wave - 1) * 0.0004;
 
         enemies.forEach(e => {
             if (!e.alive) return;
@@ -197,6 +192,8 @@ function update() {
 
             if (e.dive) {
                 e.y += diveSpeed;
+
+                // diving enemies shoot more
                 if (Math.random() < 0.01 * speedMul)
                     enemyBullets.push({ x: e.x + 10, y: e.y });
 
@@ -205,6 +202,10 @@ function update() {
                     e.dive = false;
                 }
             } else {
+                // NEW: idle enemies can shoot
+                if (Math.random() < idleShootChance)
+                    enemyBullets.push({ x: e.x + 10, y: e.y + 10 });
+
                 e.x += (e.baseX - e.x) * 0.05;
                 e.y += (e.baseY - e.y) * 0.05;
             }
@@ -259,12 +260,12 @@ function update() {
     if (lives <= 0) gameOver();
 }
 
-function gameOver(){
+function gameOver() {
     clearInterval(loop);
     statusText.innerHTML = `<button onclick="resetGame()">START OVER?</button>`;
 }
 
-function win(){
+function win() {
     clearInterval(loop);
     document.body.classList.add("shake");
     document.getElementById("gameWindow").classList.add("explode");
@@ -276,7 +277,7 @@ function win(){
     }, 500);
 }
 
-function revealGallery(){
+function revealGallery() {
     document.querySelectorAll(".photo").forEach(p => {
         const obs = new IntersectionObserver(e =>
             e.forEach(x => x.isIntersecting && x.target.classList.add("visible")),
