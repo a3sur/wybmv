@@ -26,7 +26,6 @@ body{
     letter-spacing:0.35em;
     text-align:center;
 }
-
 .content{padding:10px;}
 canvas{background:#111;display:block;margin:auto;}
 #hud{
@@ -40,8 +39,8 @@ button{font-family:monospace;padding:4px 8px;cursor:pointer;}
 </head>
 <body>
 
-<div class="window">
-    <div class="titlebar" style="letter-spacing:0.35em;text-align:center;">JOLENE-SIMULATOR.EXE</div>
+<div class="window" id="gameWindow">
+    <div class="titlebar">JOLENE-SIMULATOR.EXE</div>
     <div class="content">
         <canvas id="game" width="480" height="320"></canvas>
         <div id="hud">
@@ -76,6 +75,7 @@ const ITEM_LIST = [
     {emoji:"🍌"},
     {emoji:"🍗"}
 ];
+const SECRET_ITEM = {emoji:"💎"};
 
 const scoreEl = score;
 const timeEl = time;
@@ -86,6 +86,9 @@ const resultEl = result;
 const saved = localStorage.getItem("joleneBest");
 if(saved) bestEl.textContent = saved + "s";
 
+let secretMode = false; // next game shows secret item
+let devBuffer = ""; // key buffer for dev codes
+
 function startGame(){
     collected = 0;
     frame = 0;
@@ -95,7 +98,14 @@ function startGame(){
     generateMaze();
     player = {x:1,y:1};
 
-    items = ITEM_LIST.map(spawnItem);
+    secretMode = localStorage.getItem("joleneSecretNext")==="true";
+    if(secretMode) localStorage.setItem("joleneSecretNext","false");
+
+    if(secretMode){
+        items = [spawnItem(SECRET_ITEM)];
+    } else {
+        items = ITEM_LIST.map(spawnItem);
+    }
 
     startTime = performance.now();
     scoreEl.textContent = 0;
@@ -125,13 +135,7 @@ function spawnItem(base){
         y = rand(1,ROWS-2);
     }while(grid[y][x] || (x===1&&y===1));
 
-    return {
-        ...base,
-        x,y,
-        dx:0,dy:0,
-        cooldown: rand(40,80),
-        got:false
-    };
+    return {...base, x, y, dx:0, dy:0, cooldown: rand(40,80), got:false};
 }
 
 document.addEventListener("keydown",e=>{
@@ -141,9 +145,20 @@ document.addEventListener("keydown",e=>{
     if(e.key==="ArrowDown") ny++;
     if(e.key==="ArrowLeft") nx--;
     if(e.key==="ArrowRight") nx++;
-    if(!grid[ny]?.[nx]){
-        player.x=nx; player.y=ny;
+    if(!grid[ny]?.[nx]){player.x=nx; player.y=ny;}
+
+    // Developer codes
+    devBuffer += e.key.toLowerCase();
+    if(devBuffer.endsWith("dev14")){ // skip to secret stage
+        if(!playing) return;
+        collected = 0;
+        secretMode = true;
+        startGame();
     }
+    if(devBuffer.endsWith("dev26")){ // go straight to notepad
+        showNotepad();
+    }
+    if(devBuffer.length>10) devBuffer="";
 });
 
 function loop(){
@@ -151,7 +166,7 @@ function loop(){
     frame++;
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    // maze
+    // draw maze
     ctx.fillStyle="#333";
     for(let y=0;y<ROWS;y++){
         for(let x=0;x<COLS;x++){
@@ -159,33 +174,27 @@ function loop(){
         }
     }
 
-    // items (slower, smoother)
+    // items
     items.forEach(i=>{
         if(i.got) return;
-
         i.cooldown--;
         if(i.cooldown<=0){
             const dirs = shuffle([[1,0],[-1,0],[0,1],[0,-1]]);
             for(const [dx,dy] of dirs){
                 if(!grid[i.y+dy]?.[i.x+dx]){
-                    i.dx=dx; i.dy=dy;
-                    break;
+                    i.dx=dx; i.dy=dy; break;
                 }
             }
             i.cooldown = rand(40,80);
         }
-
-        if(frame % 22 === 0){
+        if(frame%22===0){
             const nx=i.x+i.dx, ny=i.y+i.dy;
-            if(!grid[ny]?.[nx]){
-                i.x=nx; i.y=ny;
-            }
+            if(!grid[ny]?.[nx]){i.x=nx; i.y=ny;}
         }
-
         ctx.font="16px monospace";
         ctx.fillText(i.emoji,i.x*TILE+2,i.y*TILE+16);
 
-        if(player.x===i.x&&player.y===i.y){
+        if(player.x===i.x && player.y===i.y){
             i.got=true;
             collected++;
             scoreEl.textContent=collected;
@@ -196,10 +205,10 @@ function loop(){
     ctx.fillStyle="lime";
     ctx.fillRect(player.x*TILE,player.y*TILE,TILE,TILE);
 
-    const elapsed=((performance.now()-startTime)/1000).toFixed(1);
-    timeEl.textContent=elapsed;
+    const elapsed = ((performance.now()-startTime)/1000).toFixed(1);
+    timeEl.textContent = elapsed;
 
-    if(collected>=7){
+    if(collected >= (secretMode?1:7)){
         finish(elapsed);
         return;
     }
@@ -209,14 +218,40 @@ function loop(){
 
 function finish(t){
     playing=false;
+
+    if(secretMode){
+        showNotepad();
+        return;
+    }
+
     endEl.classList.remove("hidden");
     resultEl.textContent=`You collected everything in ${t}s!`;
 
     const best = localStorage.getItem("joleneBest");
-    if(!best || t < best){
+    if(!best || t<best){
         localStorage.setItem("joleneBest",t);
-        bestEl.textContent=t+"s";
+        bestEl.textContent = t+"s";
     }
+
+    if(t<20) localStorage.setItem("joleneSecretNext","true");
+}
+
+// retro notepad window for secret
+function showNotepad(){
+    // remove everything else
+    document.body.innerHTML = "";
+    const win = document.createElement("div");
+    win.className = "window";
+    win.style.width="400px";
+    win.style.margin="50px auto";
+    win.innerHTML = `
+        <div class="titlebar">SECRET NOTE.txt</div>
+        <div class="content" style="padding:20px; font-family:monospace;">
+            <p>Placeholder content goes here...</p>
+            <button onclick="location.href='../loveme.html'">Back</button>
+        </div>
+    `;
+    document.body.appendChild(win);
 }
 
 function rand(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
