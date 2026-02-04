@@ -23,9 +23,7 @@ body {
     padding: 4px 8px;
     font-size: 14px;
 }
-.content {
-    padding: 10px;
-}
+.content { padding: 10px; }
 canvas {
     background: #000;
     display: block;
@@ -72,7 +70,6 @@ button {
 </head>
 <body>
 
-<!-- Game Window -->
 <div class="window" id="gameWindow">
     <div class="titlebar">GALAGA</div>
     <div class="content">
@@ -81,21 +78,20 @@ button {
     </div>
 </div>
 
-<!-- Gallery Window -->
 <div class="window" id="galleryWindow">
     <div class="titlebar">PHOTO GALLERY</div>
     <div class="content gallery-window">
         <div class="gallery">
-            <div class="photo"><img src="../images/1.jpeg" alt="Photo 1"></div>
-            <div class="photo"><img src="../images/2.jpeg" alt="Photo 2"></div>
-            <div class="photo"><img src="../images/3.jpeg" alt="Photo 3"></div>
-            <div class="photo"><img src="../images/4.jpeg" alt="Photo 4"></div>
-            <div class="photo"><img src="../images/5.jpeg" alt="Photo 5"></div>
-            <div class="photo"><img src="../images/6.jpeg" alt="Photo 6"></div>
-            <div class="photo"><img src="../images/7.jpeg" alt="Photo 7"></div>
-            <div class="photo"><img src="../images/8.jpeg" alt="Photo 8"></div>
-            <div class="photo"><img src="../images/9.jpeg" alt="Photo 9"></div>
-            <div class="photo"><img src="../images/10.jpeg" alt="Photo 10"></div>
+            <div class="photo"><img src="../images/1.jpeg"></div>
+            <div class="photo"><img src="../images/2.jpeg"></div>
+            <div class="photo"><img src="../images/3.jpeg"></div>
+            <div class="photo"><img src="../images/4.jpeg"></div>
+            <div class="photo"><img src="../images/5.jpeg"></div>
+            <div class="photo"><img src="../images/6.jpeg"></div>
+            <div class="photo"><img src="../images/7.jpeg"></div>
+            <div class="photo"><img src="../images/8.jpeg"></div>
+            <div class="photo"><img src="../images/9.jpeg"></div>
+            <div class="photo"><img src="../images/10.jpeg"></div>
         </div>
         <button onclick="location.href='../loveme.html'">← Back</button>
     </div>
@@ -126,134 +122,171 @@ function resetGame() {
     loop = setInterval(update, 30);
 }
 
-// SPAWN ENEMIES BASED ON WAVE
+// SPAWN ENEMIES
 function spawnWave() {
     enemies = [];
-    const counts = [6,4,3]; // fewer enemies on later waves
+    const counts = [4,5,6]; // wave 1 → 4, wave 2 → 5, wave 3 → 6
     const cols = 3;
     const num = counts[wave-1];
-    for (let i=0;i<num;i++){
+
+    for (let i = 0; i < num; i++) {
         const col = i % cols;
-        const row = Math.floor(i/cols);
+        const row = Math.floor(i / cols);
         enemies.push({
-            x:60+col*80,
-            y:40+row*40,
-            baseX:60+col*80,
-            baseY:40+row*40,
-            alive:true,
-            dive:false,
-            t:Math.random()*Math.PI
+            x: 60 + col * 80,
+            y: 40 + row * 40,
+            baseX: 60 + col * 80,
+            baseY: 40 + row * 40,
+            alive: true,
+            dive: false,
+            t: Math.random() * Math.PI
         });
     }
 }
 
-// DEV KEYS
-let devBuffer="";
-document.addEventListener("keydown", e=>{
-    if(e.key==="ArrowLeft") player.x-=10;
-    if(e.key==="ArrowRight") player.x+=10;
-    if(player.x<-20) player.x=canvas.width;
-    if(player.x>canvas.width) player.x=-20;
-    if(e.key===" " && Date.now()-lastShot>SHOT_COOLDOWN && bullets.length<MAX_BULLETS){
-        bullets.push({x:player.x+10,y:player.y});
-        lastShot=Date.now();
+let devBuffer = "";
+document.addEventListener("keydown", e => {
+    if (e.key === "ArrowLeft") player.x -= 10;
+    if (e.key === "ArrowRight") player.x += 10;
+    if (player.x < -20) player.x = canvas.width;
+    if (player.x > canvas.width) player.x = -20;
+
+    if (e.key === " " && Date.now() - lastShot > SHOT_COOLDOWN && bullets.length < MAX_BULLETS) {
+        bullets.push({ x: player.x + 10, y: player.y });
+        lastShot = Date.now();
     }
 
-    devBuffer+=e.key.toLowerCase();
-    if(devBuffer.endsWith("dev14")) nextWave();
-    if(devBuffer.endsWith("dev26")) win();
-    if(devBuffer.length>10) devBuffer="";
+    devBuffer += e.key.toLowerCase();
+    if (devBuffer.endsWith("dev14")) nextWave();
+    if (devBuffer.endsWith("dev26")) win();
+    if (devBuffer.length > 10) devBuffer = "";
 });
 
 function nextWave(){
-    if(phase==="wave"){
-        enemies.forEach(e=>e.alive=false);
-    }else if(phase==="boss"){
-        boss.hp=0;
-    }
+    if (phase === "wave") enemies.forEach(e => e.alive = false);
+    else if (phase === "boss") boss.hp = 0;
 }
 
-function update(){
-    ctx.clearRect(0,0,500,320);
+function update() {
+    ctx.clearRect(0, 0, 500, 320);
 
     // player
-    ctx.fillStyle="lime";
-    ctx.fillRect(player.x,player.y,20,10);
+    ctx.fillStyle = "lime";
+    ctx.fillRect(player.x, player.y, 20, 10);
 
-    bullets.forEach(b=>b.y-=6);
-    bullets=bullets.filter(b=>b.y>-10);
-    bullets.forEach(b=>ctx.fillRect(b.x,b.y,2,6));
+    bullets.forEach(b => b.y -= 6);
+    bullets = bullets.filter(b => b.y > -10);
+    bullets.forEach(b => ctx.fillRect(b.x, b.y, 2, 6));
 
-    enemyBullets.forEach(b=>{b.y+=3; ctx.fillRect(b.x,b.y,3,6);});
-    enemyBullets=enemyBullets.filter(b=>b.y<330);
+    enemyBullets.forEach(b => { b.y += 3; ctx.fillRect(b.x, b.y, 3, 6); });
+    enemyBullets = enemyBullets.filter(b => b.y < 330);
 
-    if(phase==="wave"){
-        enemies.forEach(e=>{
-            if(!e.alive) return;
-            e.x = e.baseX + Math.sin(e.t+=0.03)*20;
-            if(!e.dive && Math.random()<0.002)e.dive=true;
-            if(e.dive){
-                e.y+=2;
-                if(Math.random()<0.01) enemyBullets.push({x:e.x+10,y:e.y});
-                if(e.y>260){e.y=e.baseY;e.dive=false;}
-            } else { e.x+=(e.baseX-e.x)*0.05; e.y+=(e.baseY-e.y)*0.05; }
+    if (phase === "wave") {
 
-            ctx.font="16px monospace";
+        // wave scaling (subtle but noticeable)
+        const speedMul   = 1 + (wave - 1) * 0.08;
+        const diveChance = 0.0018 + (wave - 1) * 0.0012;
+        const diveSpeed  = 2 + (wave - 1) * 0.4;
+
+        enemies.forEach(e => {
+            if (!e.alive) return;
+
+            e.x = e.baseX + Math.sin(e.t += 0.03 * speedMul) * 20;
+
+            if (!e.dive && Math.random() < diveChance) e.dive = true;
+
+            if (e.dive) {
+                e.y += diveSpeed;
+                if (Math.random() < 0.01 * speedMul)
+                    enemyBullets.push({ x: e.x + 10, y: e.y });
+
+                if (e.y > 260) {
+                    e.y = e.baseY;
+                    e.dive = false;
+                }
+            } else {
+                e.x += (e.baseX - e.x) * 0.05;
+                e.y += (e.baseY - e.y) * 0.05;
+            }
+
+            ctx.font = "16px monospace";
             ctx.fillText("👾", e.x, e.y);
 
-            bullets.forEach(b=>{if(b.x>e.x && b.x<e.x+20 && b.y>e.y-16 && b.y<e.y){e.alive=false;b.y=-10;}});
+            bullets.forEach(b => {
+                if (b.x > e.x && b.x < e.x + 20 && b.y > e.y - 16 && b.y < e.y) {
+                    e.alive = false;
+                    b.y = -10;
+                }
+            });
         });
 
-        if(enemies.every(e=>!e.alive)){
-            if(wave<3){ wave++; spawnWave(); } 
-            else { phase="boss"; boss={x:200,y:40,hp:25,rage:false}; }
+        if (enemies.every(e => !e.alive)) {
+            if (wave < 3) { wave++; spawnWave(); }
+            else { phase = "boss"; boss = { x: 200, y: 40, hp: 25, rage: false }; }
         }
-        statusText.textContent=`Wave ${wave} | Lives ${lives}`;
+
+        statusText.textContent = `Wave ${wave} | Lives ${lives}`;
     }
 
-    if(phase==="boss"){
-        if(!boss.rage && boss.hp<10) boss.rage=true;
+    if (phase === "boss") {
+        if (!boss.rage && boss.hp < 10) boss.rage = true;
         boss.x += boss.rage ? Math.sin(Date.now()/100)*6 : Math.sin(Date.now()/200)*2;
-        ctx.fillStyle = boss.rage ? "crimson":"purple";
-        ctx.fillRect(boss.x,boss.y,100,20);
 
-        if(Math.random()<(boss.rage?0.08:0.04)) enemyBullets.push({x:boss.x+Math.random()*100,y:boss.y+20});
-        bullets.forEach(b=>{if(b.x>boss.x && b.x<boss.x+100 && b.y<boss.y+20){boss.hp--;b.y=-10;}});
-        if(boss.hp<=0) win();
-        statusText.textContent=`Boss HP ${boss.hp} | Lives ${lives}`;
+        ctx.fillStyle = boss.rage ? "crimson" : "purple";
+        ctx.fillRect(boss.x, boss.y, 100, 20);
+
+        if (Math.random() < (boss.rage ? 0.08 : 0.04))
+            enemyBullets.push({ x: boss.x + Math.random()*100, y: boss.y + 20 });
+
+        bullets.forEach(b => {
+            if (b.x > boss.x && b.x < boss.x + 100 && b.y < boss.y + 20) {
+                boss.hp--;
+                b.y = -10;
+            }
+        });
+
+        if (boss.hp <= 0) win();
+        statusText.textContent = `Boss HP ${boss.hp} | Lives ${lives}`;
     }
 
-    enemyBullets.forEach(b=>{if(b.x>player.x && b.x<player.x+20 && b.y>player.y){b.y=999;lives--;}});
+    enemyBullets.forEach(b => {
+        if (b.x > player.x && b.x < player.x + 20 && b.y > player.y) {
+            b.y = 999;
+            lives--;
+        }
+    });
 
-    if(lives<=0) gameOver();
+    if (lives <= 0) gameOver();
 }
 
 function gameOver(){
     clearInterval(loop);
-    statusText.innerHTML=`<button onclick="resetGame()">START OVER?</button>`;
+    statusText.innerHTML = `<button onclick="resetGame()">START OVER?</button>`;
 }
 
 function win(){
     clearInterval(loop);
     document.body.classList.add("shake");
     document.getElementById("gameWindow").classList.add("explode");
-    setTimeout(()=>{
+    setTimeout(() => {
         document.body.classList.remove("shake");
         document.getElementById("gameWindow").classList.add("hidden");
-        document.getElementById("galleryWindow").style.display="block";
+        document.getElementById("galleryWindow").style.display = "block";
         revealGallery();
-    },500);
+    }, 500);
 }
 
 function revealGallery(){
-    document.querySelectorAll(".photo").forEach(p=>{
-        const obs=new IntersectionObserver(e=>e.forEach(x=>x.isIntersecting && x.target.classList.add("visible")),{threshold:0.2});
+    document.querySelectorAll(".photo").forEach(p => {
+        const obs = new IntersectionObserver(e =>
+            e.forEach(x => x.isIntersecting && x.target.classList.add("visible")),
+            { threshold: 0.2 }
+        );
         obs.observe(p);
     });
 }
 
 resetGame();
 </script>
-
 </body>
 </html>

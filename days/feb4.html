@@ -64,13 +64,13 @@ const ROWS = 16;
 let grid, player, items, collected, startTime, playing, frame;
 
 const ITEM_LIST = [
-    {name:"Cat", emoji:"🐱"},
-    {name:"Toilet Paper", emoji:"🧻"},
-    {name:"Homework", emoji:"📘"},
-    {name:"Pen", emoji:"🖊️"},
-    {name:"Dog", emoji:"🐶"},
-    {name:"Banana", emoji:"🍌"},
-    {name:"Chicken Wing", emoji:"🍗"}
+    {emoji:"🐱"},
+    {emoji:"🧻"},
+    {emoji:"📘"},
+    {emoji:"🖊️"},
+    {emoji:"🐶"},
+    {emoji:"🍌"},
+    {emoji:"🍗"}
 ];
 
 const scoreEl = score;
@@ -91,7 +91,7 @@ function startGame(){
     generateMaze();
     player = {x:1,y:1};
 
-    items = ITEM_LIST.map(i=>spawnItem(i));
+    items = ITEM_LIST.map(spawnItem);
 
     startTime = performance.now();
     scoreEl.textContent = 0;
@@ -125,7 +125,7 @@ function spawnItem(base){
         ...base,
         x,y,
         dx:0,dy:0,
-        cooldown: rand(20,60),
+        cooldown: rand(40,80),
         got:false
     };
 }
@@ -147,7 +147,7 @@ function loop(){
     frame++;
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    // draw maze
+    // maze
     ctx.fillStyle="#333";
     for(let y=0;y<ROWS;y++){
         for(let x=0;x<COLS;x++){
@@ -155,7 +155,7 @@ function loop(){
         }
     }
 
-    // items AI
+    // items (slower, smoother)
     items.forEach(i=>{
         if(i.got) return;
 
@@ -168,10 +168,10 @@ function loop(){
                     break;
                 }
             }
-            i.cooldown = rand(20,50);
+            i.cooldown = rand(40,80);
         }
 
-        if(frame%15===0){
+        if(frame % 22 === 0){
             const nx=i.x+i.dx, ny=i.y+i.dy;
             if(!grid[ny]?.[nx]){
                 i.x=nx; i.y=ny;
