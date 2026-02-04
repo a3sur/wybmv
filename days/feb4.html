@@ -89,6 +89,9 @@ if(saved) bestEl.textContent = saved + "s";
 let secretMode = false;
 let devBuffer = "";
 
+// check for secret unlock on next play
+if(localStorage.getItem("joleneSecretNext")==="true") secretMode = true;
+
 function startGame(){
     collected = 0;
     frame = 0;
@@ -102,6 +105,8 @@ function startGame(){
     if(secretMode){
         items = [spawnItem(SECRET_ITEM)];
         document.querySelector("#hud div:nth-child(1)").textContent = "Items: 0/1";
+        secretMode = false; // only once
+        localStorage.removeItem("joleneSecretNext");
     } else {
         items = ITEM_LIST.map(spawnItem);
         document.querySelector("#hud div:nth-child(1)").textContent = "Items: 0/7";
@@ -243,8 +248,14 @@ function showNotepad(){
     win.style.margin="50px auto";
     win.innerHTML=`
         <div class="titlebar">i-confess.txt</div>
-        <div class="content" style="padding:20px; font-family:monospace;">
-            <p>
+        <div class="content" style="padding:20px;">
+            <pre style="
+                font-family: Chicago, monospace;
+                font-size: 14px;
+                line-height: 1.4;
+                white-space: pre-wrap;
+                margin: 0;
+            ">
 i confess
 i cant think of anyone else
 
@@ -269,9 +280,11 @@ your kisses in the morning
 
 i confess
 you are my love
+            </pre>
 
-            </p>
-            <button onclick="location.href='../loveme.html'">Back</button>
+            <div style="text-align:center;margin-top:12px;">
+                <button onclick="location.href='../loveme.html'">Back</button>
+            </div>
         </div>
     `;
     document.body.appendChild(win);
@@ -279,9 +292,6 @@ you are my love
 
 function rand(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 function shuffle(a){return a.sort(()=>Math.random()-0.5);}
-
-// check for secret unlock on next play
-if(localStorage.getItem("joleneSecretNext")==="true") secretMode = true;
 
 startGame();
 </script>
