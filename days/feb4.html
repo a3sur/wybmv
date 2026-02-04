@@ -86,8 +86,8 @@ const resultEl = result;
 const saved = localStorage.getItem("joleneBest");
 if(saved) bestEl.textContent = saved + "s";
 
-let secretMode = false; // next game shows secret item
-let devBuffer = ""; // key buffer for dev codes
+let secretMode = false;
+let devBuffer = "";
 
 function startGame(){
     collected = 0;
@@ -98,17 +98,17 @@ function startGame(){
     generateMaze();
     player = {x:1,y:1};
 
-    secretMode = localStorage.getItem("joleneSecretNext")==="true";
-    if(secretMode) localStorage.setItem("joleneSecretNext","false");
-
+    // spawn items
     if(secretMode){
         items = [spawnItem(SECRET_ITEM)];
+        document.querySelector("#hud div:nth-child(1)").textContent = "Items: 0/1";
     } else {
         items = ITEM_LIST.map(spawnItem);
+        document.querySelector("#hud div:nth-child(1)").textContent = "Items: 0/7";
     }
 
-    startTime = performance.now();
     scoreEl.textContent = 0;
+    startTime = performance.now();
     requestAnimationFrame(loop);
 }
 
@@ -147,17 +147,15 @@ document.addEventListener("keydown",e=>{
     if(e.key==="ArrowRight") nx++;
     if(!grid[ny]?.[nx]){player.x=nx; player.y=ny;}
 
-    // Developer codes
+    // developer codes
     devBuffer += e.key.toLowerCase();
-    if(devBuffer.endsWith("dev14")){ // skip to secret stage
-        if(!playing) return;
-        collected = 0;
+    if(devBuffer.endsWith("dev14")){ 
         secretMode = true;
+        collected = 0;
+        playing = false;
         startGame();
     }
-    if(devBuffer.endsWith("dev26")){ // go straight to notepad
-        showNotepad();
-    }
+    if(devBuffer.endsWith("dev26")) showNotepad();
     if(devBuffer.length>10) devBuffer="";
 });
 
@@ -166,7 +164,7 @@ function loop(){
     frame++;
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    // draw maze
+    // maze
     ctx.fillStyle="#333";
     for(let y=0;y<ROWS;y++){
         for(let x=0;x<COLS;x++){
@@ -197,7 +195,7 @@ function loop(){
         if(player.x===i.x && player.y===i.y){
             i.got=true;
             collected++;
-            scoreEl.textContent=collected;
+            scoreEl.textContent = collected;
         }
     });
 
@@ -236,16 +234,15 @@ function finish(t){
     if(t<20) localStorage.setItem("joleneSecretNext","true");
 }
 
-// retro notepad window for secret
+// full screen retro notepad
 function showNotepad(){
-    // remove everything else
-    document.body.innerHTML = "";
+    document.body.innerHTML="";
     const win = document.createElement("div");
-    win.className = "window";
+    win.className="window";
     win.style.width="400px";
     win.style.margin="50px auto";
-    win.innerHTML = `
-        <div class="titlebar">SECRET NOTE.txt</div>
+    win.innerHTML=`
+        <div class="titlebar">i-confess.txt</div>
         <div class="content" style="padding:20px; font-family:monospace;">
             <p>Placeholder content goes here...</p>
             <button onclick="location.href='../loveme.html'">Back</button>
@@ -256,6 +253,9 @@ function showNotepad(){
 
 function rand(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 function shuffle(a){return a.sort(()=>Math.random()-0.5);}
+
+// check for secret unlock on next play
+if(localStorage.getItem("joleneSecretNext")==="true") secretMode = true;
 
 startGame();
 </script>
