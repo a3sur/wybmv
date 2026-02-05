@@ -11,6 +11,7 @@ body{
     display:flex;
     justify-content:center;
 }
+/* make sure you dont remove more than necessary */
 .window{
     margin-top:20px;
     width:560px;
@@ -31,11 +32,6 @@ body{
 .answers label{
     display:block;
     margin-left:10px;
-    cursor:pointer;
-}
-.secret-word{
-    color:blue;
-    text-decoration:underline;
     cursor:pointer;
 }
 button{
@@ -73,24 +69,16 @@ button:disabled{
 
 <script>
 const questions = [
-    {q:"What color is the sky?", a:["Blue","Green","Red"], c:0},
-    {q:"2 + 2 =", a:["3","4","5"], c:1},
-    {q:"Which is a fruit?", a:["Carrot","Apple","Celery"], c:1},
-
-    // 👀 SECRET QUESTION
-    {
-        q:"Which word feels <span class='secret-word' id='secretTrigger'>right</span>?",
-        a:["This one","That one","The other"],
-        secret:"The hidden one",
-        c:3
-    },
-
-    {q:"Which animal barks?", a:["Cat","Dog","Fish"], c:1},
-    {q:"Which one flies?", a:["Bird","Snake","Dog"], c:0},
-    {q:"Water freezes at?", a:["0°C","10°C","50°C"], c:0},
-    {q:"Which is a planet?", a:["Moon","Mars","Sun"], c:1},
-    {q:"Fire is?", a:["Cold","Wet","Hot"], c:2},
-    {q:"Which one is sweet?", a:["Salt","Sugar","Pepper"], c:1}
+    {q:"Which is my favorite color?", a:["Green","Yellow","Red"], c:0},
+    {q:"What street did I live on as a kid?", a:["Sunset","Trionfo","San Souci"], c:1},
+    {q:"Which fruit would I pick?", a:["Grapefruit","Kiwi","Raspberry"], c:1},
+    {q:"Who is my favorite child?", a:["Jolene","Winnie","Both"], c:2},
+    {q:"What was my pet turtle named?", a:["Righteous","Justice","Leo"], c:0},
+    {q:"Which is my favorite car?", a:["Mercury Cougar","Pontiac Barracuda","Toyota Century"], c:0},
+    {q:"Which is my favorite song?", a:["Moonlight, Kali Uchis","Man Who Sold The World, David Bowie","Arabella, Arctic Monekys"], c:1},
+    {q:"Which is my favorite sweet?", a:["Ice Cream","Tres Leches","Brownie"], c:2},
+    {q:"Which is my favorite type of vanilla?", a:["French Vanilla","Homemade Vanilla","Mantecado"], c:1},
+    {q:"How old was I when I wrote my first proper poem?", a:["10","7","14"], c:0}
 ];
 
 const quizEl = document.getElementById("quiz");
@@ -102,7 +90,10 @@ let current = [];
 let devBuffer = "";
 
 function shuffle(arr){
-    return arr.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(v=>v[1]);
+    return arr
+        .map(v=>[Math.random(),v])
+        .sort((a,b)=>a[0]-b[0])
+        .map(v=>v[1]);
 }
 
 function startQuiz(){
@@ -113,22 +104,23 @@ function startQuiz(){
     continueBtn.classList.add("hidden");
 
     current = shuffle([...questions]).map(q=>{
-        let answers = q.a.map((txt,i)=>({txt,idx:i}));
-        if(q.secret) answers.push({txt:q.secret,idx:3,hidden:true});
-        return {...q, answers:shuffle(answers)};
+        return {
+            ...q,
+            answers: shuffle(q.a.map((txt,i)=>({txt,idx:i})))
+        };
     });
 
     current.forEach((q,i)=>{
         const div=document.createElement("div");
         div.className="question";
         div.innerHTML=`<strong>${i+1}. ${q.q}</strong>`;
+
         const ansDiv=document.createElement("div");
         ansDiv.className="answers";
 
         q.answers.forEach(a=>{
-            const hiddenClass = a.hidden ? "hidden" : "";
             ansDiv.innerHTML+=`
-                <label class="${hiddenClass}">
+                <label>
                     <input type="radio" name="q${i}" value="${a.idx}">
                     ${a.txt}
                 </label>`;
@@ -137,16 +129,6 @@ function startQuiz(){
         div.appendChild(ansDiv);
         quizEl.appendChild(div);
     });
-
-    const trigger = document.getElementById("secretTrigger");
-    if(trigger){
-        trigger.onclick=()=>{
-            trigger.style.color="crimson";
-            document.querySelectorAll(".answers label.hidden").forEach(l=>{
-                l.classList.remove("hidden");
-            });
-        };
-    }
 
     document.querySelectorAll("input[type=radio]").forEach(r=>{
         r.addEventListener("change",checkReady);
@@ -175,7 +157,7 @@ submitBtn.onclick=()=>{
 retryBtn.onclick=startQuiz;
 continueBtn.onclick=showNotepad;
 
-// 🔐 DEV26 handler
+// DEV26 shortcut
 document.addEventListener("keydown",e=>{
     devBuffer += e.key.toLowerCase();
     if(devBuffer.endsWith("dev26")) showNotepad();
@@ -191,14 +173,41 @@ function showNotepad(){
     win.innerHTML=`
         <div class="titlebar">untitled.txt</div>
         <div class="content" style="padding:20px;">
-            <h3>Placeholder Title</h3>
+            <h3>i hope you miss me</h3>
             <p>
-Placeholder body text.
+i wish i could show you inside my brain
+show you who i am really
+and not who you think i might be
 
-This could be anything:
-a secret,
-a message,
-or something meant only to be found.
+there is no one like you
+i cant replace you
+i cant replace you
+i cant replace you
+
+you spend time in fear
+i understand why
+i understand
+
+but
+maybe if you could see inside
+and pop the lid on this machine
+and see the wizard of oz
+
+you would see
+the normal and the strange
+the bad and the good
+and over anything else
+
+the love i have for you
+so much it makes me stupid
+so much it makes me mad
+so much it makes me sad
+
+at the end of the day
+i cant be upset
+and just miss you
+
+and i hope you miss me too
             </p>
             <button onclick="location.href='loveme.html'">Back</button>
         </div>
