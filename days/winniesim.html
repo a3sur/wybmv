@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>feb5 — Winnie Simulator</title>
+<style>
+body {
+    margin:0;
+    background:#c0c0c0;
+    font-family:Chicago, monospace;
+    display:flex;
+    justify-content:center;
+    overflow:hidden;
+}
+.window {
+    margin-top:20px;
+    width:700px;
+    background:#fff;
+    border:2px solid #000;
+    box-shadow:4px 4px #000;
+}
+.titlebar {
+    background:#000;
+    color:#fff;
+    padding:4px 8px;
+    font-size:14px;
+    letter-spacing:0.35em;
+    text-align:center;
+}
+.content{padding:10px;}
+canvas{background:#111;display:block;margin:auto;}
+#hud{
+    display:flex;
+    justify-content:space-between;
+    margin-top:6px;
+}
+button{font-family:monospace;padding:4px 8px;cursor:pointer;}
+.hidden{display:none;}
+</style>
+</head>
+<body>
+
+<div class="window">
+    <div class="titlebar">WINNIE-SIMULATOR.EXE</div>
+    <div class="content">
+        <canvas id="game" width="700" height="500"></canvas>
+        <div id="hud">
+            <div>Size: <span id="size">20</span></div>
+            <div>Food eaten: <span id="foodCount">0</span></div>
+        </div>
+        <div id="popup" class="hidden" style="text-align:center;margin-top:10px;">
+            <div id="popupMessage"></div>
+            <button onclick="startGame()">Retry</button>
+            <button onclick="location.href='../loveme.html'">Back</button>
+            <button id="secretBtn" class="hidden" onclick="startSecret()">Secret</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const sizeEl = document.getElementById("size");
+const foodEl = document.getElementById("foodCount");
+const popup = document.getElementById("popup");
+const popupMessage = document.getElementById("popupMessage");
+const secretBtn = document.getElementById("secretBtn");
+
+let player, foods, enemies, collected, playing, frame;
+let mouse = {x:350,y:250};
+let devBuffer="";
+
+// Constants
+const PLAYER_SPEED = 2.0;  
+const ENEMY_MAX_SPEED = 1.7; // Always slower than player
+const INITIAL_FOOD = 200;
+const INITIAL_ENEMIES = 20;
+const FOOD_RADIUS = 10;
+const MAP_RANGE = 5000;
+
+// Initialize game
+function startGame(){
+    player = {x:0,y:0,r:20};
+    foods = [];
+    enemies = [];
+    collected = 0;
+    frame = 0;
+    playing = true;
+    popup.classList.add("hidden");
+    secretBtn.classList.add("hidden");
+
+    for(let i=0;i<INITIAL_FOOD;i++) foods.push(randomFood());
+    for(let i=0;i<INITIAL_ENEMIES;i++) enemies.push(randomEnemy());
+
+    updateHUD();
+    requestAnimationFrame(loop);
+}
+
+// Random food anywhere
+function randomFood(){
+    return {x: Math.random()*MAP_RANGE-MAP_RANGE/2, y: Math.random()*MAP_RANGE-MAP_RANGE/2, type: Math.random()<0.5?"🧀":"🍗", r:FOOD_RADIUS};
+}
+
+// Random enemy with varying size
+function randomEnemy(){
+    return {x: Math.random()*MAP_RANGE-MAP_RANGE/2, y: Math.random()*MAP_RANGE-MAP_RANGE/2, r: 10+Math.random()*15, speed: ENEMY_MAX_SPEED};
+}
+
+// Track mouse
+canvas.addEventListener("mousemove", e=>{
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = e.clientX - rect.left;
+    mouse.y = e.clientY - rect.top;
+});
+
+// Dev codes
+document.addEventListener("keydown",e=>{
+    devBuffer += e.key.toLowerCase();
+    if(devBuffer.endsWith("dev14")) player.r += 50;
+    if(devBuffer.endsWith("dev26")) showPopup(true);
+    if(devBuffer.length>10) devBuffer="";
+});
+
+// Update player towards mouse
+function updatePlayer(){
+    let dx = mouse.x - canvas.width/2;
+    let dy = mouse.y - canvas.height/2;
+    let dist = Math.sqrt(dx*dx + dy*dy);
+    if(dist>1){
+        dx/=dist; dy/=dist;
+        player.x += dx*PLAYER_SPEED;
+        player.y += dy*PLAYER_SPEED;
+    }
+}
+
+// HUD update
+function updateHUD(){
+    sizeEl.textContent = Math.floor(player.r);
+    foodEl.textContent = collected;
+}
+
+// Game loop
+function loop(){
+    if(!playing) return;
+    frame++;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    updatePlayer();
+
+    // Center camera and zoom
+    ctx.save();
+    const scale = Math.min(1.0, 40/(player.r+20));
+    ctx.translate(canvas.width/2 - player.x*scale, canvas.height/2 - player.y*scale);
+    ctx.scale(scale,scale);
+
+    // Dynamically generate food if total < 250
+    if(foods.length<250){
+        for(let i=0;i<5;i++) foods.push(randomFood());
+    }
+
+    // Draw food
+    foods.forEach(f=>{
+        ctx.font="20px monospace";
+        ctx.fillText(f.type,f.x,f.y);
+        let dx=f.x-player.x, dy=f.y-player.y;
+        if(Math.sqrt(dx*dx+dy*dy)<player.r){
+            f.x = Math.random()*MAP_RANGE-MAP_RANGE/2;
+            f.y = Math.random()*MAP_RANGE-MAP_RANGE/2;
+            player.r += 1;
+            collected++;
+            updateHUD();
+        }
+    });
+
+    // Dynamically spawn enemies every 600 frames
+    if(frame%600===0) enemies.push(randomEnemy());
+
+    // Enemy AI
+    enemies.forEach(e=>{
+        let dxp = player.x - e.x;
+        let dyp = player.y - e.y;
+        let distp = Math.sqrt(dxp*dxp + dyp*dyp);
+
+        // pursue if smaller, flee if larger
+        let speed = Math.min(PLAYER_SPEED-0.2, e.speed);
+        if(player.r > e.r){ 
+            e.x += dxp/distp*speed;
+            e.y += dyp/distp*speed;
+        } else { 
+            e.x -= dxp/distp*speed;
+            e.y -= dyp/distp*speed;
+        }
+
+        // Enemy vs enemy interactions
+        enemies.forEach(oe=>{
+            if(oe===e) return;
+            let dx = oe.x - e.x;
+            let dy = oe.y - e.y;
+            let dist = Math.sqrt(dx*dx+dy*dy);
+            if(dist>0){
+                if(e.r>oe.r){ 
+                    e.x += dx/dist*speed*0.7;
+                    e.y += dy/dist*speed*0.7;
+                } else {
+                    e.x -= dx/dist*speed*0.7;
+                    e.y -= dy/dist*speed*0.7;
+                }
+                if(dist<e.r+oe.r && e.r>oe.r){
+                    e.r += oe.r/2;
+                    oe.x = Math.random()*MAP_RANGE-MAP_RANGE/2;
+                    oe.y = Math.random()*MAP_RANGE-MAP_RANGE/2;
+                }
+            }
+        });
+
+        // Enemy vs player
+        if(distp<player.r+e.r){
+            if(player.r>e.r){
+                player.r += e.r/2;
+                e.x = Math.random()*MAP_RANGE-MAP_RANGE/2;
+                e.y = Math.random()*MAP_RANGE-MAP_RANGE/2;
+                updateHUD();
+            } else {
+                playing=false;
+                showPopup(false);
+            }
+        }
+
+        ctx.fillStyle="red";
+        ctx.beginPath();
+        ctx.arc(e.x,e.y,e.r,0,Math.PI*2);
+        ctx.fill();
+    });
+
+    // Draw player
+    ctx.fillStyle="lime";
+    ctx.beginPath();
+    ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.restore();
+
+    if(player.r>=500){
+        playing=false;
+        showPopup(true);
+    } else requestAnimationFrame(loop);
+}
+
+// Popup
+function showPopup(secretAvailable){
+    popup.classList.remove("hidden");
+    if(secretAvailable){
+        popupMessage.textContent = "You reached massive size!";
+        secretBtn.classList.remove("hidden");
+    } else {
+        popupMessage.textContent = "You were eaten! Try again.";
+        secretBtn.classList.add("hidden");
+    }
+}
+
+// Secret stage
+function startSecret(){
+    alert("Secret stage goes here!");
+}
+
+// Start game
+startGame();
+</script>
+
+</body>
+</html>
