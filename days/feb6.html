@@ -36,16 +36,20 @@ button{
     margin:6px;
     cursor:pointer;
 }
-.hidden{display:none;}
-#popup{
-    position:absolute;
-    top:40%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    background:#fff;
-    border:2px solid #000;
-    padding:20px;
-    box-shadow:4px 4px #000;
+#lives{margin-top:4px;}
+#endmsg{margin-top:8px;}
+.status{
+    margin-top:16px;
+    font-size:14px;
+}
+.online{
+    color:green;
+    font-weight:bold;
+}
+.aol{
+    font-size:22px;
+    letter-spacing:0.3em;
+    margin-bottom:10px;
 }
 </style>
 </head>
@@ -57,162 +61,183 @@ button{
         <canvas id="game" width="600" height="360"></canvas>
         <div>
             Fish: <span id="score">0</span>
-            <span id="high" class="hidden"> | High: <span id="highscore">0</span></span>
+            <span id="high" style="display:none">
+                | High: <span id="highscore">0</span>
+            </span>
         </div>
+        <div id="lives"></div>
         <div id="controls">
-            <button onclick="startGame(false)">Start</button>
+            <button onclick="startGame(false)">Start / Reset</button>
             <button onclick="startGame(true)">Endless</button>
         </div>
+        <div id="endmsg"></div>
     </div>
 </div>
 
-<div id="popup" class="hidden"></div>
-
 <script>
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-let hookY, fish=[], hazards=[];
-let score=0, playing=false, endless=false;
-let highscore=localStorage.getItem("fishHigh")||0;
+let hookY = 180;
+let fish = [], hazards = [];
+let score = 0, playing = false, endless = false;
+let lives = 3;
+let highscore = localStorage.getItem("fishHigh") || 0;
+let devBuffer = ""; // For Dev26
 
-document.getElementById("highscore").textContent=highscore;
+document.getElementById("highscore").textContent = highscore;
 
-function startGame(isEndless){
-    endless=isEndless;
-    score=0;
-    hookY=20;
-    fish=[];
-    hazards=[];
-    playing=true;
-
-    document.getElementById("score").textContent=0;
-    document.getElementById("high").classList.toggle("hidden",!endless);
-
-    spawnLoop();
-    loop();
-}
-
-canvas.addEventListener("mousemove",e=>{
-    const r=canvas.getBoundingClientRect();
-    hookY=e.clientY-r.top;
+// Hook follows mouse
+canvas.addEventListener("mousemove", e => {
+    const r = canvas.getBoundingClientRect();
+    hookY = e.clientY - r.top;
 });
 
-function spawnLoop(){
-    if(!playing) return;
-    fish.push({x:600,y:rand(40,320),r:8});
-    if(Math.random()<0.4)
-        hazards.push({x:600,y:rand(40,320),r:10});
-    setTimeout(spawnLoop,700);
+function drawLives() {
+    document.getElementById("lives").textContent =
+        "Lives: " + "🪱".repeat(lives);
 }
 
-function loop(){
-    if(!playing) return;
-    ctx.clearRect(0,0,600,360);
+// Start/reset game
+function startGame(isEndless) {
+    endless = isEndless;
+    playing = true;
+    score = 0;
+    lives = 3;
+    hookY = 180;
+    fish = [];
+    hazards = [];
+    document.getElementById("score").textContent = score;
+    document.getElementById("endmsg").innerHTML = "";
+    document.getElementById("high").style.display = endless ? "inline" : "none";
+    drawLives();
+    spawn(); // start spawning now that game is active
+}
 
-    // ice hole
-    ctx.fillStyle="#000";
-    ctx.fillRect(290,0,20,20);
+// Spawn fish and hazards
+function spawn() {
+    if (!playing) return;
 
-    // line + hook
-    ctx.strokeStyle="#000";
+    // Fish spawn
+    fish.push({x: 600, y: rand(40, 320), r: 8});
+    // Hazard 35% chance
+    if (Math.random() < 0.35) hazards.push({x: 600, y: rand(40, 320), r: 10});
+
+    setTimeout(spawn, 900);
+}
+
+// Game loop
+function loop() {
+    ctx.clearRect(0, 0, 600, 360);
+
+    // Draw dock
+    ctx.fillStyle = "#654321";
+    ctx.fillRect(290, 0, 20, 20);
+
+    // Draw line
+    ctx.strokeStyle = "#000";
     ctx.beginPath();
-    ctx.moveTo(300,20);
-    ctx.lineTo(300,hookY);
+    ctx.moveTo(300, 0);
+    ctx.lineTo(300, hookY);
     ctx.stroke();
 
-    ctx.fillStyle="silver";
+    // Draw hook
+    ctx.fillStyle = "silver";
     ctx.beginPath();
-    ctx.arc(300,hookY,6,0,Math.PI*2);
+    ctx.arc(300, hookY, 6, 0, Math.PI * 2);
     ctx.fill();
 
-    fish.forEach(f=>{
-        f.x-=2;
-        ctx.fillStyle="orange";
-        ctx.beginPath();
-        ctx.arc(f.x,f.y,f.r,0,Math.PI*2);
-        ctx.fill();
+    if (playing) {
+        // Fish movement
+        fish.forEach(f => {
+            f.x -= 1.5;
+            ctx.fillStyle = "orange";
+            ctx.beginPath();
+            ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+            ctx.fill();
 
-        if(Math.abs(f.x-300)<8 && Math.abs(f.y-hookY)<8){
-            score++;
-            document.getElementById("score").textContent=score;
-            f.x=-100;
-            if(!endless && score>=30) win();
+            if (Math.abs(f.x - 300) < 8 && Math.abs(f.y - hookY) < 8) {
+                score++;
+                document.getElementById("score").textContent = score;
+                f.x = -100; // remove fish
+
+                if (!endless && score >= 30) {
+                    playing = false;
+                    setTimeout(showAOL, 800);
+                }
+            }
+        });
+
+        // Hazard movement
+        hazards.forEach(h => {
+            h.x -= 1.2;
+            ctx.fillStyle = "red";
+            ctx.beginPath();
+            ctx.arc(h.x, h.y, h.r, 0, Math.PI * 2);
+            ctx.fill();
+
+            if (Math.abs(h.x - 300) < 8 && Math.abs(h.y - hookY) < 8) {
+                h.x = -100;
+                lives--;
+                drawLives();
+                if (lives <= 0) {
+                    playing = false;
+                    showDeathMessage();
+                }
+            }
+        });
+
+        // Endless highscore
+        if (endless && score > highscore) {
+            highscore = score;
+            localStorage.setItem("fishHigh", highscore);
+            document.getElementById("highscore").textContent = highscore;
         }
-    });
-
-    hazards.forEach(h=>{
-        h.x-=3;
-        ctx.fillStyle="red";
-        ctx.beginPath();
-        ctx.arc(h.x,h.y,h.r,0,Math.PI*2);
-        ctx.fill();
-
-        if(Math.abs(h.x-300)<8 && Math.abs(h.y-hookY)<8){
-            lose();
-        }
-    });
-
-    if(endless && score>highscore){
-        highscore=score;
-        localStorage.setItem("fishHigh",highscore);
-        document.getElementById("highscore").textContent=highscore;
     }
 
     requestAnimationFrame(loop);
 }
 
-function win(){
-    playing=false;
-    popup("Redirecting...",()=>{
-        showQuiz();
-    });
+function showDeathMessage() {
+    document.getElementById("endmsg").innerHTML =
+        "<strong>Out of bait.</strong><br>" +
+        "<button onclick='startGame(" + endless + ")'>Retry</button>" +
+        "<button onclick='location.reload()'>Back</button>";
 }
 
-function lose(){
-    playing=false;
-    popup("You lost!",()=>{
-        popup(`
-            <button onclick="startGame(${endless})">Retry</button>
-            <button onclick="location.reload()">Back</button>
-        `,null,true);
-    });
-}
-
-function popup(text,cb,raw){
-    const p=document.getElementById("popup");
-    p.innerHTML=raw?text:`<div>${text}</div>`;
-    p.classList.remove("hidden");
-    if(cb){
-        setTimeout(()=>{
-            p.classList.add("hidden");
-            cb();
-        },2000);
-    }
-}
-
-function showQuiz(){
-    document.body.innerHTML=`
-    <div class="window">
-        <div class="titlebar">QUIZ.TXT</div>
+// AOL screen
+function showAOL() {
+    document.body.innerHTML = `
+    <div class="window" style="margin-top:60px;width:420px;">
+        <div class="titlebar">WELCOME</div>
         <div class="content">
-            <form action="mailto:YOUR_EMAIL_HERE@example.com" method="post" enctype="text/plain">
-                <p>1. Favorite fish?</p>
-                <input name="Q1"><br><br>
-                <p>2. Did you enjoy this?</p>
-                <input name="Q2"><br><br>
-                <p>3. Endless or Normal?</p>
-                <input name="Q3"><br><br>
-
-                <button type="submit">Send</button>
-                <button type="button" onclick="location.reload()">Back</button>
-            </form>
+            <div class="aol">A O L</div>
+            <div class="status">
+                Username: <strong>xXx_lard305_xXx</strong><br>
+                Status: <span class="online">● Online</span>
+            </div>
+            <br>
+            <button onclick="location.href='mailto:andrewhlee715@gmail.com'">
+                Send me a message!
+            </button>
+            <br><br>
+            <button onclick="location.reload()">Back</button>
         </div>
-    </div>
-    `;
+    </div>`;
 }
 
-function rand(a,b){return Math.random()*(b-a)+a;}
+// Random helper
+function rand(a, b) { return Math.random() * (b - a) + a; }
+
+// DEV26 key listener to go **directly to AOL screen**
+document.addEventListener("keydown", e => {
+    devBuffer += e.key.toLowerCase();
+    if (devBuffer.endsWith("dev26")) showAOL();
+    if (devBuffer.length > 10) devBuffer = "";
+});
+
+// Start loop
+loop();
 </script>
 
 </body>
