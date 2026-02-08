@@ -2,39 +2,109 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Fruitger Retro Mac Flappy Bird</title>
+<title>Escape the Ween!</title>
 <style>
     body {
         margin: 0;
-        background: #c0c0c0;
+        background: url('./images/winnie.jpeg') no-repeat center center fixed;
+        background-size: cover;
         font-family: 'Monaco', monospace;
         display: flex;
-        justify-content: center;
+        flex-direction: column;
         align-items: center;
         height: 100vh;
         overflow: hidden;
     }
+    #titleBar {
+        width: 100%;
+        background: #000000;
+        color: #ffffff;
+        text-align: center;
+        padding: 10px 0;
+        font-size: 24px;
+        font-weight: bold;
+        border-bottom: 4px solid #ffffff;
+    }
     canvas {
         border: 4px solid black;
         image-rendering: pixelated;
+        margin-top: 10px;
+        background: rgba(255, 255, 255, 0.7);
+    }
+    #popup, #cmdWindow, #backBtn {
+        position: absolute;
+        font-family: 'Monaco', monospace;
+        z-index: 10;
+    }
+    #popup {
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
         background: #ffffff;
+        border: 4px solid black;
+        padding: 20px;
+        display: none;
+    }
+    #cmdWindow {
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 400px;
+        height: 200px;
+        background: #000000;
+        color: #00ff00;
+        overflow: hidden;
+        padding: 10px;
+        display: none;
+    }
+    #backBtn {
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    button {
+        font-family: 'Monaco', monospace;
+        font-size: 16px;
+        margin-top: 10px;
     }
 </style>
 </head>
 <body>
+<div id="titleBar">Escape the Ween!</div>
 <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+<div id="popup">
+    <div>SECRET LEVEL UNLOCKED</div>
+    <button id="continueBtn">Continue</button>
+</div>
+
+<div id="cmdWindow">
+    <div>system-error64.exe</div>
+    <div id="cmdText" style="white-space: pre; margin-top:10px;"></div>
+</div>
+
+<button id="backBtn">Back</button>
+
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Game variables
-let bird = { x: 80, y: 300, width: 20, height: 20, velocity: 0 };
-const gravity = 0.25;  // moderate fall
-const lift = -7;        // slightly less powerful jump
+let bird = { x: 80, y: 300, width: 40, height: 40, velocity: 0, img: null };
+const gravity = 0.25;
+const lift = -7;
 let pipes = [];
 let frame = 0;
 let score = 0;
 let gameOver = false;
+let secretUnlocked = false;
+let endlessMode = true;
+let highScore = 0;
+
+// Load chicken wing image
+bird.img = new Image();
+bird.img.src = './images/winnie.jpeg';
+let imgLoaded = false;
+bird.img.onload = () => { imgLoaded = true; };
 
 function resetGame() {
     bird.y = 300;
@@ -43,10 +113,11 @@ function resetGame() {
     score = 0;
     frame = 0;
     gameOver = false;
+    if (endlessMode) secretUnlocked = false;
 }
 
 function addPipe() {
-    const gap = 200;  // slightly more spacing
+    const gap = 200;
     const topHeight = Math.floor(Math.random() * (canvas.height - gap - 50)) + 20;
     const bottomHeight = canvas.height - topHeight - gap;
     pipes.push({ x: canvas.width, top: topHeight, bottom: bottomHeight, width: 40 });
@@ -60,48 +131,55 @@ function update() {
 
     if (bird.y + bird.height > canvas.height || bird.y < 0) {
         gameOver = true;
+        if (endlessMode && score > highScore) highScore = score;
     }
 
-    // Pipes
-    if (frame % 150 === 0) addPipe(); // more spacing between pipes
-    for (let i = pipes.length - 1; i >= 0; i--) {
-        pipes[i].x -= 2; // slow but steady
+    if (frame % 150 === 0) addPipe();
 
+    for (let i = pipes.length - 1; i >= 0; i--) {
+        pipes[i].x -= 2;
         if (pipes[i].x + pipes[i].width < 0) {
             pipes.splice(i, 1);
             score++;
         }
-
-        // Collision
         if (bird.x < pipes[i].x + pipes[i].width && bird.x + bird.width > pipes[i].x) {
             if (bird.y < pipes[i].top || bird.y + bird.height > canvas.height - pipes[i].bottom) {
                 gameOver = true;
+                if (endlessMode && score > highScore) highScore = score;
             }
         }
+    }
+
+    if (!endlessMode && score >= 25 && !secretUnlocked) {
+        secretUnlocked = true;
+        document.getElementById('popup').style.display = 'block';
     }
 
     frame++;
 }
 
 function draw() {
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Bird
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
+    // Draw bird only if image loaded
+    if (imgLoaded) {
+        ctx.drawImage(bird.img, bird.x, bird.y, bird.width, bird.height);
+    } else {
+        ctx.fillStyle = '#ffcc00';
+        ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
+    }
 
-    // Pipes
     ctx.fillStyle = '#000000';
     pipes.forEach(pipe => {
         ctx.fillRect(pipe.x, 0, pipe.width, pipe.top);
         ctx.fillRect(pipe.x, canvas.height - pipe.bottom, pipe.width, pipe.bottom);
     });
 
-    // Score
     ctx.fillStyle = '#000000';
     ctx.font = '24px Monaco';
-    ctx.fillText('Score: ' + score, 10, 30);
+    let scoreText = 'Score: ' + score;
+    if (endlessMode) scoreText += '  High: ' + highScore;
+    ctx.fillText(scoreText, 10, 30);
 
     if (gameOver) {
         ctx.font = '32px Monaco';
@@ -117,12 +195,54 @@ function loop() {
     requestAnimationFrame(loop);
 }
 
+function typeCommand(text, element, duration, callback) {
+    let i = 0;
+    const interval = duration / text.length;
+    const typer = setInterval(() => {
+        element.textContent += text.charAt(i);
+        i++;
+        if (i >= text.length) {
+            clearInterval(typer);
+            if (callback) callback();
+        }
+    }, interval);
+}
+
+document.getElementById('continueBtn').addEventListener('click', () => {
+    document.getElementById('popup').style.display = 'none';
+    const cmd = document.getElementById('cmdWindow');
+    const cmdText = document.getElementById('cmdText');
+    cmdText.textContent = '';
+    cmd.style.display = 'block';
+
+    setTimeout(() => {
+        typeCommand('rerouting to feb8.html...', cmdText, 6000, () => {
+            setTimeout(() => {
+                window.location.href = 'feb8.html';
+            }, 1000);
+        });
+    }, 500);
+});
+
+document.getElementById('backBtn').addEventListener('click', () => {
+    window.location.href = './loveme.html';
+});
+
 document.addEventListener('keydown', (e) => {
     if (e.code === 'Space') {
         if (gameOver) resetGame();
         bird.velocity = lift;
-        e.preventDefault(); // prevent scrolling
+        e.preventDefault();
     }
+});
+
+let devInput = '';
+document.addEventListener('keydown', (e) => {
+    devInput += e.key;
+    if (devInput.endsWith('dev28')) {
+        window.location.href = 'feb8.html';
+    }
+    if (devInput.length > 5) devInput = devInput.slice(-5);
 });
 
 loop();
