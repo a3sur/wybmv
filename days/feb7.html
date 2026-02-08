@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Fruitger Retro Mac Flappy Bird</title>
+<style>
+    body {
+        margin: 0;
+        background: #c0c0c0;
+        font-family: 'Monaco', monospace;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
+    }
+    canvas {
+        border: 4px solid black;
+        image-rendering: pixelated;
+        background: #ffffff;
+    }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas" width="400" height="600"></canvas>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// Game variables
+let bird = { x: 80, y: 300, width: 20, height: 20, velocity: 0 };
+const gravity = 0.25;  // moderate fall
+const lift = -7;        // slightly less powerful jump
+let pipes = [];
+let frame = 0;
+let score = 0;
+let gameOver = false;
+
+function resetGame() {
+    bird.y = 300;
+    bird.velocity = 0;
+    pipes = [];
+    score = 0;
+    frame = 0;
+    gameOver = false;
+}
+
+function addPipe() {
+    const gap = 200;  // slightly more spacing
+    const topHeight = Math.floor(Math.random() * (canvas.height - gap - 50)) + 20;
+    const bottomHeight = canvas.height - topHeight - gap;
+    pipes.push({ x: canvas.width, top: topHeight, bottom: bottomHeight, width: 40 });
+}
+
+function update() {
+    if (gameOver) return;
+
+    bird.velocity += gravity;
+    bird.y += bird.velocity;
+
+    if (bird.y + bird.height > canvas.height || bird.y < 0) {
+        gameOver = true;
+    }
+
+    // Pipes
+    if (frame % 150 === 0) addPipe(); // more spacing between pipes
+    for (let i = pipes.length - 1; i >= 0; i--) {
+        pipes[i].x -= 2; // slow but steady
+
+        if (pipes[i].x + pipes[i].width < 0) {
+            pipes.splice(i, 1);
+            score++;
+        }
+
+        // Collision
+        if (bird.x < pipes[i].x + pipes[i].width && bird.x + bird.width > pipes[i].x) {
+            if (bird.y < pipes[i].top || bird.y + bird.height > canvas.height - pipes[i].bottom) {
+                gameOver = true;
+            }
+        }
+    }
+
+    frame++;
+}
+
+function draw() {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Bird
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
+
+    // Pipes
+    ctx.fillStyle = '#000000';
+    pipes.forEach(pipe => {
+        ctx.fillRect(pipe.x, 0, pipe.width, pipe.top);
+        ctx.fillRect(pipe.x, canvas.height - pipe.bottom, pipe.width, pipe.bottom);
+    });
+
+    // Score
+    ctx.fillStyle = '#000000';
+    ctx.font = '24px Monaco';
+    ctx.fillText('Score: ' + score, 10, 30);
+
+    if (gameOver) {
+        ctx.font = '32px Monaco';
+        ctx.fillText('GAME OVER', 100, canvas.height / 2);
+        ctx.font = '20px Monaco';
+        ctx.fillText('Press SPACE to restart', 100, canvas.height / 2 + 40);
+    }
+}
+
+function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+        if (gameOver) resetGame();
+        bird.velocity = lift;
+        e.preventDefault(); // prevent scrolling
+    }
+});
+
+loop();
+</script>
+</body>
+</html>
