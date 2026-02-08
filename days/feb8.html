@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>feb5 — Winnie Simulator</title>
+<title>Winnie Simulator</title>
 <style>
 body {
     margin:0;
@@ -36,6 +36,41 @@ canvas{background:#111;display:block;margin:auto;}
 }
 button{font-family:monospace;padding:4px 8px;cursor:pointer;}
 .hidden{display:none;}
+
+.archiveWindow {
+    position:fixed;
+    top:5vh;
+    left:5vw;
+    width:90vw;
+    height:90vh;
+    background:#fff;
+    border:2px solid #000;
+    box-shadow:4px 4px #000;
+    display:none;
+    flex-direction:column;
+}
+
+.archiveTitle {
+    background:#000;
+    color:#fff;
+    padding:4px 8px;
+    font-size:14px;
+    letter-spacing:0.25em;
+    text-align:center;
+}
+
+.archiveContent {
+    padding:16px;
+    white-space:pre;
+    overflow:hidden;   /* still no scrolling */
+    font-family:monospace;
+    line-height:1.45;
+    flex:1;
+}
+.archiveButtons {
+    padding:10px;
+    text-align:center;
+}
 </style>
 </head>
 <body>
@@ -57,6 +92,26 @@ button{font-family:monospace;padding:4px 8px;cursor:pointer;}
     </div>
 </div>
 
+<div class="archiveWindow" id="archiveWindow">
+    <div class="archiveTitle">archive.txt</div>
+    <div class="archiveContent" id="archiveContent">
+To hold her hand is to grasp the moon in my palm. The sky and stars, the sun and all space, contained within her eyes. 
+
+When I am graced with her gaze, I become the wealthiest man to ever walk the Earth. My wallet never holds more than a twenty and some change, but in her embrace, I am richer than any other.
+
+She is my desire. She, the fire blazing in my heart. Her smile, the fuel that makes my heart beat and beat faster. To have her by my side is a blessing like no other.
+
+I could live all of twenty lifetimes, live the lives of twenty people, and I’d seek her every time. My heart flutters when I hear her voice, my chest aches in her absence.
+
+My mind, filled with thoughts of her. My beautiful princess, my love, my yearning. You fill the world with such brightness and vitality, I can scarce believe it was ever so bright before your arrival.
+
+And for you, I give my all.
+    </div>
+    <div class="archiveButtons">
+        <button onclick="archiveWindow.style.display='none'">Back</button>
+    </div>
+</div>
+
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -65,6 +120,7 @@ const foodEl = document.getElementById("foodCount");
 const popup = document.getElementById("popup");
 const popupMessage = document.getElementById("popupMessage");
 const secretBtn = document.getElementById("secretBtn");
+const archiveWindow = document.getElementById("archiveWindow");
 
 let player, foods, enemies, collected, playing, frame;
 let mouse = {x:350,y:250};
@@ -72,13 +128,13 @@ let devBuffer="";
 
 // Constants
 const PLAYER_SPEED = 2.0;  
-const ENEMY_MAX_SPEED = 1.7; // Always slower than player
+const ENEMY_MAX_SPEED = 1.7;
 const INITIAL_FOOD = 200;
 const INITIAL_ENEMIES = 20;
 const FOOD_RADIUS = 10;
-const MAP_RANGE = 5000;
+const MAP_RANGE = 8000;
+const END_SIZE = 300;
 
-// Initialize game
 function startGame(){
     player = {x:0,y:0,r:20};
     foods = [];
@@ -88,6 +144,7 @@ function startGame(){
     playing = true;
     popup.classList.add("hidden");
     secretBtn.classList.add("hidden");
+    archiveWindow.style.display='none';
 
     for(let i=0;i<INITIAL_FOOD;i++) foods.push(randomFood());
     for(let i=0;i<INITIAL_ENEMIES;i++) enemies.push(randomEnemy());
@@ -96,24 +153,30 @@ function startGame(){
     requestAnimationFrame(loop);
 }
 
-// Random food anywhere
 function randomFood(){
-    return {x: Math.random()*MAP_RANGE-MAP_RANGE/2, y: Math.random()*MAP_RANGE-MAP_RANGE/2, type: Math.random()<0.5?"🧀":"🍗", r:FOOD_RADIUS};
+    return {
+        x: Math.random()*MAP_RANGE-MAP_RANGE/2,
+        y: Math.random()*MAP_RANGE-MAP_RANGE/2,
+        type: Math.random()<0.5?"🧀":"🍗",
+        r:FOOD_RADIUS
+    };
 }
 
-// Random enemy with varying size
 function randomEnemy(){
-    return {x: Math.random()*MAP_RANGE-MAP_RANGE/2, y: Math.random()*MAP_RANGE-MAP_RANGE/2, r: 10+Math.random()*15, speed: ENEMY_MAX_SPEED};
+    return {
+        x: Math.random()*MAP_RANGE-MAP_RANGE/2,
+        y: Math.random()*MAP_RANGE-MAP_RANGE/2,
+        r: 10+Math.random()*15,
+        speed: ENEMY_MAX_SPEED
+    };
 }
 
-// Track mouse
 canvas.addEventListener("mousemove", e=>{
     const rect = canvas.getBoundingClientRect();
     mouse.x = e.clientX - rect.left;
     mouse.y = e.clientY - rect.top;
 });
 
-// Dev codes
 document.addEventListener("keydown",e=>{
     devBuffer += e.key.toLowerCase();
     if(devBuffer.endsWith("dev14")) player.r += 50;
@@ -121,7 +184,6 @@ document.addEventListener("keydown",e=>{
     if(devBuffer.length>10) devBuffer="";
 });
 
-// Update player towards mouse
 function updatePlayer(){
     let dx = mouse.x - canvas.width/2;
     let dy = mouse.y - canvas.height/2;
@@ -133,32 +195,26 @@ function updatePlayer(){
     }
 }
 
-// HUD update
 function updateHUD(){
     sizeEl.textContent = Math.floor(player.r);
     foodEl.textContent = collected;
 }
 
-// Game loop
 function loop(){
     if(!playing) return;
     frame++;
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
     updatePlayer();
-
-    // Center camera and zoom
     ctx.save();
     const scale = Math.min(1.0, 40/(player.r+20));
     ctx.translate(canvas.width/2 - player.x*scale, canvas.height/2 - player.y*scale);
     ctx.scale(scale,scale);
 
-    // Dynamically generate food if total < 250
     if(foods.length<250){
         for(let i=0;i<5;i++) foods.push(randomFood());
     }
 
-    // Draw food
     foods.forEach(f=>{
         ctx.font="20px monospace";
         ctx.fillText(f.type,f.x,f.y);
@@ -172,48 +228,22 @@ function loop(){
         }
     });
 
-    // Dynamically spawn enemies every 600 frames
     if(frame%600===0) enemies.push(randomEnemy());
 
-    // Enemy AI
     enemies.forEach(e=>{
         let dxp = player.x - e.x;
         let dyp = player.y - e.y;
         let distp = Math.sqrt(dxp*dxp + dyp*dyp);
-
-        // pursue if smaller, flee if larger
         let speed = Math.min(PLAYER_SPEED-0.2, e.speed);
-        if(player.r > e.r){ 
+
+        if(player.r > e.r){
             e.x += dxp/distp*speed;
             e.y += dyp/distp*speed;
-        } else { 
+        } else {
             e.x -= dxp/distp*speed;
             e.y -= dyp/distp*speed;
         }
 
-        // Enemy vs enemy interactions
-        enemies.forEach(oe=>{
-            if(oe===e) return;
-            let dx = oe.x - e.x;
-            let dy = oe.y - e.y;
-            let dist = Math.sqrt(dx*dx+dy*dy);
-            if(dist>0){
-                if(e.r>oe.r){ 
-                    e.x += dx/dist*speed*0.7;
-                    e.y += dy/dist*speed*0.7;
-                } else {
-                    e.x -= dx/dist*speed*0.7;
-                    e.y -= dy/dist*speed*0.7;
-                }
-                if(dist<e.r+oe.r && e.r>oe.r){
-                    e.r += oe.r/2;
-                    oe.x = Math.random()*MAP_RANGE-MAP_RANGE/2;
-                    oe.y = Math.random()*MAP_RANGE-MAP_RANGE/2;
-                }
-            }
-        });
-
-        // Enemy vs player
         if(distp<player.r+e.r){
             if(player.r>e.r){
                 player.r += e.r/2;
@@ -232,7 +262,6 @@ function loop(){
         ctx.fill();
     });
 
-    // Draw player
     ctx.fillStyle="lime";
     ctx.beginPath();
     ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
@@ -240,13 +269,14 @@ function loop(){
 
     ctx.restore();
 
-    if(player.r>=500){
+    if(player.r>=END_SIZE){
         playing=false;
         showPopup(true);
-    } else requestAnimationFrame(loop);
+    } else {
+        requestAnimationFrame(loop);
+    }
 }
 
-// Popup
 function showPopup(secretAvailable){
     popup.classList.remove("hidden");
     if(secretAvailable){
@@ -258,12 +288,10 @@ function showPopup(secretAvailable){
     }
 }
 
-// Secret stage
 function startSecret(){
-    alert("Secret stage goes here!");
+    archiveWindow.style.display='flex';
 }
 
-// Start game
 startGame();
 </script>
 
