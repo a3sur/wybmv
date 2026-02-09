@@ -6,15 +6,10 @@
 <title>Works</title>
 
 <style>
-    html, body {
-        margin: 0;
-        padding: 0;
-    }
-
     body {
         font-family: Arial, sans-serif;
         background-color: #f4f4f4;
-        color: #000000; /* ← THIS is the key fix */
+        color: #000;
         padding: 40px;
     }
 
@@ -42,28 +37,54 @@
     }
 </style>
 </head>
-
 <body>
 
-<h1>WORKS:</h1>
+<h1>WORKS: <span id="count">(0)</span></h1>
 
-<ul>
-    <li>
-        <a href="https://raw.githubusercontent.com/a3sur/wybmv/main/docs/the-debate.docx" download>
-            the-debate.pdf
-        </a>
-    </li>
-    <li>
-        <a href="https://raw.githubusercontent.com/a3sur/wybmv/main/docs/file2.docx" download>
-            File 2 – DOCX
-        </a>
-    </li>
-    <li>
-        <a href="https://raw.githubusercontent.com/a3sur/wybmv/main/docs/file3.zip" download>
-            File 3 – ZIP
-        </a>
-    </li>
+<ul id="fileList">
+    <li>Loading…</li>
 </ul>
+
+<script>
+const USER = "a3sur";
+const REPO = "wybmv";
+const FOLDER = "docs";
+
+const apiURL = `https://api.github.com/repos/${USER}/${REPO}/contents/${FOLDER}`;
+const rawBase = `https://raw.githubusercontent.com/${USER}/${REPO}/main/${FOLDER}/`;
+
+fetch(apiURL)
+    .then(res => res.json())
+    .then(files => {
+        const list = document.getElementById("fileList");
+        list.innerHTML = "";
+
+        const validFiles = files.filter(f => f.type === "file");
+
+        document.getElementById("count").textContent = `(${validFiles.length})`;
+
+        validFiles.forEach(file => {
+            const li = document.createElement("li");
+            const a = document.createElement("a");
+
+            a.href = rawBase + file.name;
+            a.textContent = file.name;
+            a.setAttribute("download", "");
+
+            li.appendChild(a);
+            list.appendChild(li);
+        });
+
+        if (validFiles.length === 0) {
+            list.innerHTML = "<li>No documents found.</li>";
+        }
+    })
+    .catch(err => {
+        document.getElementById("fileList").innerHTML =
+            "<li>Failed to load files.</li>";
+        console.error(err);
+    });
+</script>
 
 </body>
 </html>
