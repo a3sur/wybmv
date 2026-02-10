@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Love Desk</title>
+<title>Lovely Trinkets</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -13,6 +13,38 @@
         overflow: hidden;
         user-select: none;
     }
+
+    /* Background double-click text */
+    .bg-text {
+    position: fixed;
+    top: 0;
+    height: 100vh;
+    width: 50vw;
+
+    font-size: 14vw;            /* smaller so it never spills */
+    font-weight: 900;
+    letter-spacing: -0.04em;    /* tighter horizontally */
+
+    color: rgba(255, 255, 255, 0.35);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    transform: scaleY(1.25) scaleX(0.9); /* taller, less wide */
+    transform-origin: center;
+
+    pointer-events: none;
+    line-height: 1;
+    text-align: center;
+    overflow: hidden;
+}
+
+    .bg-left { left: 0; }
+    .bg-right { right: 0; }
+
+
+    .hidden { display: none; }
 
     .object {
         position: absolute;
@@ -125,22 +157,24 @@
 </head>
 <body>
 
-<!-- Sticky notes -->
-<div class="object sticky" style="top:60px; left:80px;" data-id="1">Sticky Note 1</div>
-<div class="object sticky" style="top:240px; left:120px;" data-id="2">Sticky Note 2</div>
-<div class="object sticky" style="top:420px; left:90px;" data-id="3">Sticky Note 3</div>
-<div class="object sticky" style="top:160px; left:260px;" data-id="4">Sticky Note 4</div>
+<!-- Background text -->
+<div class="bg-text bg-left">DOUBLE</div>
+<div class="bg-text bg-right">CLICK</div>
+
+<!-- Sticky notes (3, all different) -->
+<div class="object sticky" style="top:60px; left:80px;" data-id="1">i want you</div>
+<div class="object sticky" style="top:260px; left:140px;" data-id="2">i miss you</div>
+<div class="object sticky" style="top:420px; left:100px;" data-id="3">i love you</div>
 
 <!-- Coupons -->
-<div class="object coupon" style="top:90px; left:440px;">Coupon A</div>
-<div class="object coupon" style="top:220px; left:500px;">Coupon B</div>
-<div class="object coupon" style="top:350px; left:460px;">Coupon C</div>
+<div class="object coupon" style="top:90px; left:440px;">Popcorn + Movie</div>
+<div class="object coupon" style="top:220px; left:500px;">Seafood Boil</div>
+<div class="object coupon" style="top:350px; left:460px;">Back Massage</div>
 
 <!-- Receipt -->
 <div class="object receipt" style="top:140px; left:700px;">
     LARD BUFFET<br>
-    ----------------<br>
-    <br>
+    ----------------<br><br>
     Sushi x4<br>
     Soup x9<br>
     Fruit Tea x2<br>
@@ -150,8 +184,7 @@
     Burger x4<br>
     Chicken Wings x16<br>
     Fruit Bowl x5<br>
-    Fries x1<br>
-    <br>
+    Fries x1<br><br>
     TOTAL: $XXXXX.XX<br>
     ----------------<br>
     Thank you :)
@@ -159,12 +192,8 @@
 
 <!-- Movie tickets -->
 <div class="object tickets" style="top:430px; left:640px;">
-    <div class="ticket">
-        SUPERMAN<br>🎬<br>SEAT F16
-    </div>
-    <div class="ticket">
-        SUPERMAN<br>🎬<br>SEAT F17
-    </div>
+    <div class="ticket">SUPERMAN<br>🎬<br>SEAT F16</div>
+    <div class="ticket">SUPERMAN<br>🎬<br>SEAT F17</div>
 </div>
 
 <!-- Heart -->
@@ -176,6 +205,32 @@ let offsetX = 0;
 let offsetY = 0;
 let z = 1;
 
+/* Closed + open content defined in one place */
+const notes = {
+    1: {
+        closed: "i miss you",
+        open:
+        "hi silly ❤️<br><br>" + 
+        "i miss you! i can't wait to see you, i can't wait to take you out for dinner. most of all, i can't wait to hold you in my arms again.<br><br>" + 
+        "i hope you have a wonderful day! i love you <3 <br><br>" 
+    },
+    2: {
+        closed: "i love you",
+        open: "i love you so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so so much!"
+    },
+    3: {
+        closed: "i want you",
+        open: "i know sometimes you think i'm not attracted to you. but every time i find myself wanting, its you i see. <br><br>" +
+        "i never would have thought a smirk from anyone could get me to swoon the way yours does. the prettiest girl to have ever graced this world. <br><br>" +
+        "i could only ever be left wanting you."
+    }
+};
+
+/* Ensure initial titles are correct */
+document.querySelectorAll('.sticky').forEach(note => {
+    note.innerHTML = notes[note.dataset.id].closed;
+});
+
 document.querySelectorAll('.object').forEach(obj => {
 
     obj.addEventListener('mousedown', e => {
@@ -185,19 +240,16 @@ document.querySelectorAll('.object').forEach(obj => {
         obj.style.zIndex = ++z;
     });
 
-    obj.addEventListener('dblclick', () => {
+    obj.addEventListener('dblclick', e => {
+        e.stopPropagation();
         if (!obj.classList.contains('sticky')) return;
 
         obj.classList.toggle('open');
 
-        if (obj.classList.contains('open')) {
-            obj.innerHTML =
-                "hi silly ❤️<br><br>" +
-                "i miss you! i can't wait to see you, i can't wait to take you out for dinner. most of all, i can't wait to hold you in my arms again.<br><br>" +
-                "i hope you have a wonderful day! i love you <3 <br><br>" ;
-        } else {
-            obj.innerHTML = `Sticky Note ${obj.dataset.id}`;
-        }
+        const data = notes[obj.dataset.id];
+        obj.innerHTML = obj.classList.contains('open')
+            ? data.open
+            : data.closed;
     });
 });
 
@@ -207,10 +259,16 @@ document.addEventListener('mousemove', e => {
     active.style.top = `${e.clientY - offsetY}px`;
 });
 
-document.addEventListener('mouseup', () => {
-    active = null;
+document.addEventListener('mouseup', () => active = null);
+
+/* Background double-click toggle */
+document.body.addEventListener('dblclick', () => {
+    document.querySelectorAll('.bg-text').forEach(el =>
+        el.classList.toggle('hidden')
+    );
 });
 </script>
+
 
 </body>
 </html>
