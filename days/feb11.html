@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Heart Dash</title>
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:linear-gradient(#ffd6e7,#ff9ec4);
+    font-family:Arial, sans-serif;
+}
+canvas{
+    display:block;
+    margin:0 auto;
+    background:#fff0f6;
+}
+#ui{
+    position:absolute;
+    top:10px;
+    left:50%;
+    transform:translateX(-50%);
+    font-size:20px;
+    font-weight:bold;
+}
+#gameOver{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    font-size:28px;
+    display:none;
+}
+</style>
+</head>
+<body>
+
+<div id="ui">Hearts: 0</div>
+<div id="gameOver">Game Over<br>Press R to Restart</div>
+<canvas id="game" width="800" height="400"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const groundY = 320;
+
+let player = {
+    x:100,
+    y:groundY,
+    size:40,
+    vy:0,
+    jumping:false,
+    rotation:0
+};
+
+let gravity = 0.8;
+let maxJumpHold = 18;
+let jumpHoldTime = 0;
+let isHoldingJump = false;
+
+let obstacles = [];
+let hearts = [];
+let platforms = [];
+
+let score = 0;
+let speed = 4;
+let gameRunning = true;
+
+/* SPAWN */
+
+function spawnObstacle(){
+    obstacles.push({
+        x:canvas.width,
+        y:groundY,
+        width:30,
+        height:60
+    });
+}
+
+function spawnPlatformSet(){
+    let height = 240 - Math.random()*60;
+    platforms.push({
+        x:canvas.width,
+        y:height,
+        width:120,
+        height:15
+    });
+
+    hearts.push({
+        x:canvas.width + 60,
+        y:height - 40,
+        size:18
+    });
+}
+
+function spawnGroundHeart(){
+    hearts.push({
+        x:canvas.width,
+        y:300,
+        size:18
+    });
+}
+
+setInterval(()=>{ if(gameRunning) spawnObstacle(); }, 2200);
+setInterval(()=>{ if(gameRunning) spawnPlatformSet(); }, 4000);
+setInterval(()=>{ if(gameRunning) spawnGroundHeart(); }, 1800);
+
+/* DRAW */
+
+function drawCube(){
+    ctx.save();
+    ctx.translate(player.x + player.size/2, player.y + player.size/2);
+    ctx.rotate(player.rotation);
+    ctx.fillStyle="#ff2e88";
+    ctx.fillRect(-player.size/2, -player.size/2, player.size, player.size);
+    ctx.restore();
+}
+
+function drawObstacle(o){
+    ctx.fillStyle="#444";
+    ctx.fillRect(o.x, o.y, o.width, o.height);
+}
+
+function drawPlatform(p){
+    ctx.fillStyle="#8e44ad";
+    ctx.fillRect(p.x, p.y, p.width, p.height);
+}
+
+function drawHeart(h){
+    ctx.fillStyle="red";
+    ctx.beginPath();
+    let x=h.x, y=h.y, s=h.size;
+    ctx.moveTo(x,y);
+    ctx.bezierCurveTo(x-s/2,y-s/2,x-s,y+s/3,x,y+s);
+    ctx.bezierCurveTo(x+s,y+s/3,x+s/2,y-s/2,x,y);
+    ctx.fill();
+}
+
+/* LOOP */
+
+function update(){
+    if(!gameRunning) return;
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // ground
+    ctx.fillStyle="#333";
+    ctx.fillRect(0,360,canvas.width,40);
+
+    // jump hold
+    if(isHoldingJump && jumpHoldTime < maxJumpHold){
+        player.vy -= 0.6;
+        jumpHoldTime++;
+    }
+
+    player.vy += gravity;
+    player.y += player.vy;
+
+    let onPlatform = false;
+
+    // platforms
+    for(let i=platforms.length-1;i>=0;i--){
+        let p = platforms[i];
+        p.x -= speed;
+        drawPlatform(p);
+
+        if(p.x + p.width < 0){
+            platforms.splice(i,1);
+            continue;
+        }
+
+        if(player.vy >= 0 &&
+           player.x + player.size > p.x &&
+           player.x < p.x + p.width &&
+           player.y + player.size >= p.y &&
+           player.y + player.size <= p.y + 20){
+                player.y = p.y - player.size;
+                player.vy = 0;
+                player.jumping = false;
+                jumpHoldTime = 0;
+                onPlatform = true;
+        }
+    }
+
+    // ground collision
+    if(player.y >= groundY && !onPlatform){
+        player.y = groundY;
+        player.vy = 0;
+        player.jumping = false;
+        jumpHoldTime = 0;
+
+        // snap rotation upright
+        player.rotation = Math.round(player.rotation / (Math.PI/2)) * (Math.PI/2);
+    }
+
+    // rotate while airborne
+    if(player.jumping){
+        player.rotation += 0.15;
+    }
+
+    drawCube();
+
+    // obstacles
+    for(let i=obstacles.length-1;i>=0;i--){
+        let o = obstacles[i];
+        o.x -= speed;
+        drawObstacle(o);
+
+        if(o.x + o.width < 0){
+            obstacles.splice(i,1);
+        }
+
+        if(player.x < o.x+o.width &&
+           player.x+player.size > o.x &&
+           player.y < o.y+o.height &&
+           player.y+player.size > o.y){
+               gameOver();
+        }
+    }
+
+    // hearts
+    for(let i=hearts.length-1;i>=0;i--){
+        let h = hearts[i];
+        h.x -= speed;
+        drawHeart(h);
+
+        if(h.x < 0){
+            hearts.splice(i,1);
+        }
+
+        if(player.x < h.x+h.size &&
+           player.x+player.size > h.x-h.size &&
+           player.y < h.y+h.size &&
+           player.y+player.size > h.y-h.size){
+               score++;
+               document.getElementById("ui").innerText="Hearts: "+score;
+               hearts.splice(i,1);
+        }
+    }
+
+    speed += 0.0005;
+    requestAnimationFrame(update);
+}
+
+/* CONTROLS */
+
+function jumpStart(){
+    if(!player.jumping && gameRunning){
+        player.vy = -10;
+        player.jumping = true;
+        isHoldingJump = true;
+        jumpHoldTime = 0;
+    }
+}
+
+function jumpEnd(){
+    isHoldingJump = false;
+}
+
+function gameOver(){
+    gameRunning=false;
+    document.getElementById("gameOver").style.display="block";
+}
+
+function restart(){
+    obstacles=[];
+    hearts=[];
+    platforms=[];
+    score=0;
+    speed=4;
+    player.y=groundY;
+    player.vy=0;
+    player.rotation=0;
+    gameRunning=true;
+    document.getElementById("ui").innerText="Hearts: 0";
+    document.getElementById("gameOver").style.display="none";
+    update();
+}
+
+document.addEventListener("keydown",(e)=>{
+    if(e.code==="Space" || e.code==="ArrowUp") jumpStart();
+    if(e.code==="KeyR") restart();
+});
+document.addEventListener("keyup",(e)=>{
+    if(e.code==="Space" || e.code==="ArrowUp") jumpEnd();
+});
+
+update();
+</script>
+</body>
+</html>
