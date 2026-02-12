@@ -19,8 +19,8 @@ body{
 
 .container{
     position:relative;
-    width:80vmin;
-    height:80vmin;
+    width:85vmin;
+    height:85vmin;
 }
 
 .heart{
@@ -37,23 +37,24 @@ body{
     height:100%;
     background:currentColor;
     clip-path:polygon(
-        50% 92%,
-        8% 55%,
-        8% 30%,
-        25% 12%,
-        40% 18%,
+        50% 95%,
+        5% 55%,
+        5% 30%,
+        25% 10%,
+        45% 20%,
         50% 35%,
-        60% 18%,
-        75% 12%,
-        92% 30%,
-        92% 55%
+        55% 20%,
+        75% 10%,
+        95% 30%,
+        95% 55%
     );
     display:flex;
     align-items:center;
     justify-content:center;
     color:white;
-    font-weight:bold;
+    font-weight:900;
     text-align:center;
+    padding:1vmin;
     box-sizing:border-box;
 }
 
@@ -79,17 +80,20 @@ function createHearts(){
         const wrapper = document.createElement("div");
         wrapper.className = "heart";
 
-        const size = 100 - (i * 4);
-        wrapper.style.width = size + "%";
-        wrapper.style.height = size + "%";
+        // Responsive size using vmin-based container
+        const sizePercent = 100 - (i * 4);
+        wrapper.style.width = sizePercent + "%";
+        wrapper.style.height = sizePercent + "%";
         wrapper.style.zIndex = totalHearts - i;
 
         const heartShape = document.createElement("div");
         heartShape.className = "heart-shape";
         heartShape.style.color = `hsl(${340 - i*4}, 80%, ${65 - i*1.2}%)`;
 
-        // Scale font based on size
-        heartShape.style.fontSize = (size * 0.12) + "px";
+        // Responsive font scaling based on heart layer
+        // Larger base size + gradual reduction
+        const fontSize = 6 - (i * 0.18); 
+        heartShape.style.fontSize = fontSize + "vmin";
 
         heartShape.innerText = "Placeholder #" + (i+1);
 
