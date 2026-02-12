@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Nesting Hearts</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+    margin:0;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(135deg,#ff9ec4,#ffd6e7);
+    font-family:Arial, sans-serif;
+    overflow:hidden;
+}
+
+.container{
+    position:relative;
+    width:80vmin;
+    height:80vmin;
+}
+
+.heart{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
+    cursor:pointer;
+    transition:transform 0.4s ease, opacity 0.4s ease;
+}
+
+.heart-shape{
+    width:100%;
+    height:100%;
+    background:currentColor;
+    clip-path:polygon(
+        50% 92%,
+        8% 55%,
+        8% 30%,
+        25% 12%,
+        40% 18%,
+        50% 35%,
+        60% 18%,
+        75% 12%,
+        92% 30%,
+        92% 55%
+    );
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    font-weight:bold;
+    text-align:center;
+    box-sizing:border-box;
+}
+
+.fadeOut{
+    transform:translate(-50%, -50%) scale(0);
+    opacity:0;
+}
+</style>
+</head>
+<body>
+
+<div class="container" id="container"></div>
+
+<script>
+const container = document.getElementById("container");
+const totalHearts = 20;
+
+function createHearts(){
+    container.innerHTML = "";
+
+    for(let i = 0; i < totalHearts; i++){
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "heart";
+
+        const size = 100 - (i * 4);
+        wrapper.style.width = size + "%";
+        wrapper.style.height = size + "%";
+        wrapper.style.zIndex = totalHearts - i;
+
+        const heartShape = document.createElement("div");
+        heartShape.className = "heart-shape";
+        heartShape.style.color = `hsl(${340 - i*4}, 80%, ${65 - i*1.2}%)`;
+
+        // Scale font based on size
+        heartShape.style.fontSize = (size * 0.12) + "px";
+
+        heartShape.innerText = "Placeholder #" + (i+1);
+
+        wrapper.appendChild(heartShape);
+        container.appendChild(wrapper);
+    }
+}
+
+createHearts();
+
+container.addEventListener("click", () => {
+    const hearts = container.querySelectorAll(".heart");
+    if(hearts.length === 0) return;
+
+    const outer = hearts[0];
+
+    outer.classList.add("fadeOut");
+
+    setTimeout(() => {
+        if(container.contains(outer)){
+            container.removeChild(outer);
+        }
+
+        if(container.children.length === 0){
+            setTimeout(createHearts, 400);
+        }
+    }, 400);
+});
+</script>
+
+</body>
+</html>
