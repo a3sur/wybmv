@@ -51,13 +51,15 @@ body{
     display:flex;
     align-items:center;
     justify-content:center;
-    color:white;
+    color:black;           /* text color */
     font-weight:900;
     text-align:center;
-    padding:1.5vmin;
+    padding:1vmin;
     box-sizing:border-box;
-    line-height:1.2;
-    white-space:pre-line;
+    line-height:1.1;
+    white-space:normal;    /* allow wrapping */
+    overflow-wrap: break-word;
+    word-wrap: break-word;
 }
 
 .fadeOut{
@@ -137,10 +139,21 @@ function createHearts(){
 
         const heartShape = document.createElement("div");
         heartShape.className = "heart-shape";
-        heartShape.style.color = `hsl(${340 - i*4}, 80%, ${65 - i*1.2}%)`;
 
-        const fontSize = 6 - (i * 0.18);
-        heartShape.style.fontSize = fontSize + "vmin";
+        // Heart background
+        heartShape.style.background = `hsl(${340 - i*4}, 80%, ${65 - i*1.2}%)`;
+
+        // Text color
+        heartShape.style.color = "black";
+
+        // Force text to stay inside heart by limiting width
+        heartShape.style.padding = "2vmin";
+        heartShape.style.fontSize = `${sizePercent * 0.07}vmin`; // proportional to heart size
+        heartShape.style.lineHeight = 1.1;
+        heartShape.style.whiteSpace = "normal";
+        heartShape.style.overflowWrap = "break-word";
+        heartShape.style.wordWrap = "break-word";
+        heartShape.style.textAlign = "center";
 
         heartShape.innerText = messages[i];
 
