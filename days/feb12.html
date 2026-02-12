@@ -54,13 +54,38 @@ body{
     color:white;
     font-weight:900;
     text-align:center;
-    padding:1vmin;
+    padding:1.5vmin;
     box-sizing:border-box;
+    line-height:1.2;
+    white-space:pre-line;
 }
 
 .fadeOut{
     transform:translate(-50%, -50%) scale(0);
     opacity:0;
+}
+
+/* Back Button */
+.back-btn{
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    padding:12px 24px;
+    font-size:16px;
+    font-weight:bold;
+    border:none;
+    border-radius:30px;
+    background:#ff4f8b;
+    color:white;
+    cursor:pointer;
+    box-shadow:0 5px 15px rgba(0,0,0,0.2);
+    transition:transform 0.2s ease, background 0.2s ease;
+}
+
+.back-btn:hover{
+    transform:translateX(-50%) scale(1.05);
+    background:#ff2f75;
 }
 </style>
 </head>
@@ -68,9 +93,34 @@ body{
 
 <div class="container" id="container"></div>
 
+<button class="back-btn" onclick="goHome()">Back to Home</button>
+
 <script>
 const container = document.getElementById("container");
 const totalHearts = 20;
+
+const messages = [
+"Placeholder Message #1",
+"Placeholder Message #2",
+"Placeholder Message #3",
+"Placeholder Message #4",
+"Placeholder Message #5",
+"Placeholder Message #6",
+"Placeholder Message #7",
+"Placeholder Message #8",
+"Placeholder Message #9",
+"Placeholder Message #10",
+"Placeholder Message #11",
+"Placeholder Message #12",
+"Placeholder Message #13",
+"Placeholder Message #14",
+"Placeholder Message #15",
+"Placeholder Message #16",
+"Placeholder Message #17",
+"Placeholder Message #18",
+"Placeholder Message #19",
+"Placeholder Message #20"
+];
 
 function createHearts(){
     container.innerHTML = "";
@@ -80,7 +130,6 @@ function createHearts(){
         const wrapper = document.createElement("div");
         wrapper.className = "heart";
 
-        // Responsive size using vmin-based container
         const sizePercent = 100 - (i * 4);
         wrapper.style.width = sizePercent + "%";
         wrapper.style.height = sizePercent + "%";
@@ -90,12 +139,10 @@ function createHearts(){
         heartShape.className = "heart-shape";
         heartShape.style.color = `hsl(${340 - i*4}, 80%, ${65 - i*1.2}%)`;
 
-        // Responsive font scaling based on heart layer
-        // Larger base size + gradual reduction
-        const fontSize = 6 - (i * 0.18); 
+        const fontSize = 6 - (i * 0.18);
         heartShape.style.fontSize = fontSize + "vmin";
 
-        heartShape.innerText = "Placeholder #" + (i+1);
+        heartShape.innerText = messages[i];
 
         wrapper.appendChild(heartShape);
         container.appendChild(wrapper);
@@ -122,6 +169,10 @@ container.addEventListener("click", () => {
         }
     }, 400);
 });
+
+function goHome(){
+    window.location.href = "/index.html";
+}
 </script>
 
 </body>
