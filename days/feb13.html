@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The Finney Case</title>
+<style>
+body{
+    margin:0;
+    background:#2e2a28;
+    font-family:"Courier New", monospace;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+.desk{
+    width:900px;
+    height:600px;
+    background:#6b4f3a;
+    border:8px solid #3e2b1f;
+    position:relative;
+    box-shadow:0 0 30px #000 inset;
+}
+.object{
+    position:absolute;
+    background:#d8c9a3;
+    padding:10px;
+    border:2px solid #222;
+    cursor:pointer;
+    font-weight:bold;
+}
+#folder{ top:60px; left:80px; }
+#report{ top:60px; right:80px; }
+#suspects{ bottom:60px; left:50%; transform:translateX(-50%); }
+#detective{ bottom:60px; right:80px; }
+
+.window{
+    position:absolute;
+    top:80px;
+    left:50%;
+    transform:translateX(-50%);
+    width:700px;
+    height:420px;
+    background:#111;
+    color:#0f0;
+    padding:15px;
+    border:4px solid #333;
+    display:none;
+    overflow:auto;
+}
+.closeBtn{
+    position:absolute;
+    top:5px;
+    right:10px;
+    cursor:pointer;
+    color:red;
+}
+button{
+    font-family:"Courier New", monospace;
+    margin:5px;
+}
+input{
+    background:black;
+    color:#0f0;
+    border:1px solid #0f0;
+    font-family:"Courier New", monospace;
+}
+</style>
+</head>
+<body>
+
+<div class="desk">
+
+    <div id="folder" class="object">Folder of Case Files</div>
+    <div id="report" class="object">Coroner's Report</div>
+    <div id="suspects" class="object">Suspect List</div>
+    <div id="detective" class="object">Detective Report</div>
+
+    <div id="window" class="window">
+        <div class="closeBtn" onclick="closeWindow()">[X]</div>
+        <div id="content"></div>
+    </div>
+
+</div>
+
+<script>
+const culprit = "bambi";
+
+const suspects = {
+    "Winnie (Princess, Dog)": {
+        alibi:"I was in the rose garden practicing royal poses. Jolene saw me.",
+        motive:"Finney scratched my velvet cushion last week.",
+        relation:"We were polite rivals.",
+        suspicion:"I would never poison someone. That's... common."
+    },
+    "Lucy (The Plague, Cat)": {
+        alibi:"I was in the library. Alone. As usual.",
+        motive:"Finney mocked my coughing fits.",
+        relation:"He feared me.",
+        suspicion:"Poison is predictable. I prefer theatrics."
+    },
+    "Frankie (Freak, Cat)": {
+        alibi:"In the workshop building mechanical spiders.",
+        motive:"Finney called my art disturbing.",
+        relation:"He misunderstood genius.",
+        suspicion:"I don't use poison. Too clean."
+    },
+    "Bambi (Mean Girl, Cat)": {
+        alibi:"In my room, but I stepped out briefly before tea.",
+        motive:"Finney wouldn't sit at my lunch table.",
+        relation:"He was socially tragic.",
+        suspicion:"Belladonna stains are impossible to get out of white fur..."
+    },
+    "Pixie (Devious Sister, Cat)": {
+        alibi:"With Minerva all afternoon.",
+        motive:"Finney owed us favors.",
+        relation:"He was useful.",
+        suspicion:"We're innocent. Obviously."
+    },
+    "Minerva (Devious Sister, Cat)": {
+        alibi:"With Pixie all afternoon.",
+        motive:"Finney discovered something he shouldn't have.",
+        relation:"Complicated.",
+        suspicion:"If someone were poisoned, they'd have to know the kitchen schedule."
+    },
+    "Jolene (Jobert, Dog)": {
+        alibi:"Fixing pipes in the basement.",
+        motive:"Finney tripped me yesterday.",
+        relation:"He laughed at my bark.",
+        suspicion:"Poison? I only fix leaks."
+    }
+};
+
+function openWindow(text){
+    document.getElementById("content").innerHTML = text;
+    document.getElementById("window").style.display="block";
+}
+function closeWindow(){
+    document.getElementById("window").style.display="none";
+}
+
+document.getElementById("folder").onclick = function(){
+    openWindow(`
+=== CASE FILES ===
+
+Victim: Finney (Cat)
+
+Finney was found at his desk during last night's gathering.
+A teacup sat beside him.
+No signs of struggle.
+
+Witnesses reported seeing faint red staining
+on white fur near the dining hall after tea.
+    `);
+};
+
+document.getElementById("report").onclick = function(){
+    openWindow(`
+=== CORONER'S REPORT ===
+
+Time of Death: 7:30 PM
+
+Cause of Death:
+Belladonna poisoning via tea.
+
+Trace residue found on the teacup handle.
+    `);
+};
+
+document.getElementById("suspects").onclick = function(){
+    let list = "=== SUSPECT LIST ===<br><br>";
+    for(let name in suspects){
+        list += `<button onclick="interrogate('${name}')">${name}</button><br>`;
+    }
+    openWindow(list);
+};
+
+function interrogate(name){
+    openWindow(`
+=== INTERROGATING ${name} ===
+
+Type 1-4:
+
+1 - Where were you at 7:30 PM?
+2 - Motive?
+3 - Relationship?
+4 - Thoughts on poisoning?
+
+<input id="qInput" maxlength="1">
+<button onclick="askQuestion('${name}')">Ask</button>
+<div id="response"></div>
+    `);
+}
+
+function askQuestion(name){
+    const q = document.getElementById("qInput").value;
+    const s = suspects[name];
+    let r="";
+    if(q==="1") r=s.alibi;
+    else if(q==="2") r=s.motive;
+    else if(q==="3") r=s.relation;
+    else if(q==="4") r=s.suspicion;
+    else r="Invalid question.";
+    document.getElementById("response").innerHTML="<br>> "+r;
+}
+
+document.getElementById("detective").onclick = function(){
+    openWindow(`
+=== DETECTIVE REPORT ===
+
+DETECTIVE:
+Enter the name of the culprit.
+
+<input id="culpritInput">
+<button onclick="submitCulprit()">Submit</button>
+    `);
+};
+
+function submitCulprit(){
+    const guess = document.getElementById("culpritInput").value.toLowerCase().trim();
+
+    if(guess === culprit){
+        openWindow(`
+=== LOCAL CAT CAUGHT RED HANDED... WITH BLOOD! ===
+
+DETECTIVE:
+Bambi, your brief disappearance before tea
+and your knowledge of belladonna stains
+betrayed you.
+
+<button onclick="location.href='loveme.html'">Back</button>
+        `);
+    } else {
+        openWindow(`
+=== YOU ARE NOW FIRED. TRY AGAIN? ===
+
+<button onclick="location.reload()">Retry</button>
+<button onclick="location.href='loveme.html'">Back</button>
+        `);
+    }
+}
+</script>
+
+</body>
+</html>
