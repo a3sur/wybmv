@@ -241,7 +241,7 @@ function askQuestion(name){
         const matches=pattern.every((val,i)=>history[i]===val);
 
         if(matches && history.length>=4){
-            r="I NEED TO FINISH THE JOB. INVADER! I HATE HIM! Oops.";
+            r="I NEED TO FINISH THE JOB. INVADER! I HATE HIM! ... Oops.";
         } else {
             const s=suspects[name];
             if(q==="1") r=s.alibi;
@@ -288,7 +288,7 @@ if(guess===culprit){
 openWindow(`
 <h2>LOCAL CAT CAUGHT RED HANDED</h2>
 Bambi exposed.<br>
-Finney recovered alive.<br><br>
+Finney found unharmed.<br><br>
 <button onclick="showSuspectList()">Back</button>
 `);
 }else{
